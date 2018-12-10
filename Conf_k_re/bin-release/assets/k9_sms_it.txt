@@ -1,0 +1,72 @@
+ 00|Messa sotto protezione del settore numero|Gruppo di Zone Sorveglianza Attivato
+ 01|Protezione rimossa dal settore numero|Gruppo di Zone Sorveglianza Disattivato
+ 02|Attenzione! C'era disinserimento sotto costrizione numero di sezione|Costrizione
+ 03|Guasto del cavo piatto numero|Guasto del cavo piatto
+ 04|Attenzione! Allarme del cavo piatto numero|Allarme del cavo piatto
+ 05|Ripristino del cavo piatto numero|Ripristino del cavo piatto
+ 06|nella|nella
+ 07|sezione # 1|sezione # 1 
+ 08|sezione # 2|sezione # 2 
+ 09|sezione # 3|sezione # 3 
+ 10|sezione # 4|sezione # 4 
+ 11|sezione # 5|sezione # 5 
+ 12|sezione # 6|sezione # 6 
+ 13|zona # 1|zona # 1 
+ 14|zona # 2|zona # 2 
+ 15|zona # 3|zona # 3 
+ 16|zona # 4|zona # 4 
+ 17|zona # 5|zona # 5 
+ 18|zona # 6|zona # 6 
+ 19|Attenzione! E' stato premuto il pulsante di allarme "incendio" nell'oggetto numero|incendio
+ 20|Attenzione! E' stato premuto il pulsante di allarme "medico" nell'oggetto numero|medico
+ 21|Attenzione! E' stato premuto il pulsante di allarme "sicurezza" nell'oggetto numero|sicurezza
+ 22|Attenzione! Manomissione del pannello nell'oggetto numero|tamper
+ 23|C'era una transizione ad una alimentazione di riserva|Su alimentazione di riserva
+ 24|C'era una transizione verso l'alimentazione principale|Su l'alimentazione principale
+ 25|Il panello e stato riavviato|Riavvio
+ 26|Autotest|autotest
+ 27|pulsante STAY|pulsante STAY 
+ 28|codice # 1|codice 1 
+ 29|codice # 2|codice 2 
+ 30|codice # 3|codice 3 
+ 31|codice # 4|codice 4 
+ 32|codice # 5|codice 5 
+ 33|codice # 6|codice 6 
+ 34|codice # 7|codice 7 
+ 35|codice # 8|codice 8 
+ 36|codice # 9|codice 9 
+ 37|codice # 10|codice 10 
+ 38|pulsante EXIT|pulsante EXIT 
+ 39|Reserve|Reserve
+ 40|Attivazione Automatica|Attivazione Automatica
+ 41|Il chiave numero 1|chiave #1 
+ 42|Il chiave numero 2|chiave #2 
+ 43|Il chiave numero 3|chiave #3 
+ 44|Il chiave numero 4|chiave #4 
+ 45|Il chiave numero 5|chiave #5 
+ 46|Il chiave numero 6|chiave #6 
+ 47|Il chiave numero 7|chiave #7 
+ 48|Il chiave numero 8|chiave #8 
+ 49|Il chiave numero 9|chiave #9 
+ 50|Il chiave numero 10|chiave #10 
+ 51|Il chiave numero 11|chiave #11 
+ 52|Il chiave numero 12|chiave #12 
+ 53|Il chiave numero 13|chiave #13 
+ 54|Il chiave numero 14|chiave #14 
+ 55|Il chiave numero 15|chiave #15 
+ 56|Il chiave numero 16|chiave #16 
+ 57|riserva|riserva
+ 58|Batteria difettosa|Batteria difettosa
+ 59|Batteria scarica|Batteria scarica
+ 60|Remoto inserimento|Remoto inserimento
+ 61|Remota disinserito|Remota disinserito
+ 62|Invio il codice errato|Invio il codice errato
+ 63|Gruppi D'intervento Immediato|Gruppi D'intervento Immediato
+ 64|Recupero della carica batteria |Recupero della carica batteria 
+ 65|Errore dell' inserimento sotto la sorveglianza |Errore dell'inserimento sotto la sorveglianza 
+ 66|Recupero: E' premuto il pulsante "Incendio" |Recupero: E' premuto il pulsante "Incendio" 
+ 67|Recupero: E' premuto il pulsante "Medico" |Recupero: E' premuto il pulsante "Medico" 
+ 68|Recupero: E' premuto il pulsante "Panico" |Recupero: E' premuto il pulsante "Panico"
+ 74|Accesso alla modalità di programmazione|Accesso alla modalità di programmazione
+ 75|Uscita dalla modalità di programmazione|Uscita dalla modalità di programmazione
+ 76|Pulizia della lista degli eventi|Pulizia della lista degli eventi 

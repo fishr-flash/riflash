@@ -1,0 +1,126 @@
+package components.screens.ui
+{
+	import components.abstract.sysservants.PartitionServant;
+	import components.basement.UIRadioDeviceRoot;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.screens.opt.OptTMKey;
+	import components.static.CMD;
+	import components.static.RF_FUNCT;
+	import components.system.SavePerformer;
+
+	public class UIKeys extends UIRadioDeviceRoot
+	{
+		public static var LAST_PARTITION:int = 0xFFFFFF;
+		
+		public function UIKeys()
+		{
+			label = "Ключ";
+			labelParentPadejM = "ключей";
+			labelParentPadejS = "ключа ";
+			labelParentPadejR = "ключ";
+			LOCALE_NOT_FOUND = "найден";
+			label_construct = "Ключ ТМ ";
+			cmd = CMD.TM_KEY;
+			deviceType = RF_FUNCT.TYPE_KEY_TM;
+			DEVICE_MAX = 16;
+			fwidth = 432;
+			fheight = 140;
+			
+			opt = new OptTMKey;
+			
+			super();
+			
+			state = CMD.TM_KEY_STATE;
+			
+			navi.setXOffset( 50 );
+			
+			addChild( opt );
+			opt.visible = false;
+			
+			starterCMD = CMD.TM_KEY;
+		}
+		override protected function assembleFunct(action:int):void
+		{
+			switch(action)
+			{
+				case RF_FUNCT.DO_CANCEL:
+					RequestAssembler.getInstance().fireEvent( new Request(
+						CMD.TM_KEY_FUNCT, cancelSuccess, 1,[ currentActionDeviceId+1, RF_FUNCT.DO_CANCEL ] ));
+					break;
+				case RF_FUNCT.DO_ADD:
+					RequestAssembler.getInstance().fireEvent( new Request(
+						CMD.TM_KEY_FUNCT, addDevice, 1,[ currentActionDeviceId+1, RF_FUNCT.DO_ADD ] ));
+					break;
+				case RF_FUNCT.DO_DEL:
+					RequestAssembler.getInstance().fireEvent( new Request(
+						CMD.TM_KEY_FUNCT, removeDevice, 1,[ navi.selection+1, RF_FUNCT.DO_DEL ] ));
+					break;
+				case  RF_FUNCT.DO_RESTORE:
+					RequestAssembler.getInstance().fireEvent( new Request(
+						CMD.TM_KEY_FUNCT, restoreDevice, 1,[ deletedDevice.structure, RF_FUNCT.DO_RESTORE ] ));
+					break;
+			}
+		}
+		override protected function overwriteState():void
+		{
+			RequestAssembler.getInstance().fireEvent( new Request( state, null, 1,[0,0] ));
+		}
+		override protected function getStateStatus(re:Array):int
+		{
+			return re[1];
+		}
+		override protected function isDeviceValid(re:Array):Boolean
+		{
+			return true;
+		}
+		override protected function getStruct(re:Array):int
+		{
+			return re[0];
+		}
+		override protected function isActive(v:int):Boolean
+		{
+			return Boolean(v==1);
+		}
+		private function response(p:Package):void
+		{
+			if ( !p.error ) {
+				RequestAssembler.getInstance().fireEvent( new Request( CMD.TM_KEY, openDeviceSuccess, currentActionDeviceId+1 ));
+			}
+		}
+		override protected function openDeviceSuccess(p:Package):void
+		{
+			if ( !p.error ) {
+				SavePerformer.closePage();
+				if (NEED_DEFAULTS) {
+					var arr:Array = p.getStructure().slice();
+					var bit:int = 0;
+					if(LAST_PARTITION > 0xffff) {
+						for( var key:String in PartitionServant.PARTITION ) {
+							bit |= 1<<(int(key)-1);
+						}
+					} else
+						bit = LAST_PARTITION;
+					arr[9] = bit;
+					arr[10] = currentActionDeviceId+1;
+					NEED_DEFAULTS = false;
+					RequestAssembler.getInstance().fireEvent( new Request( CMD.TM_KEY, response, currentActionDeviceId+1, arr ));
+				} else {
+					oDevices[currentActionDeviceId] = p.getStructure();
+					opt.putData( Package.create( oDevices[currentActionDeviceId], currentActionDeviceId+1 ));
+					opt.visible = true;
+					tNotify.visible = false;
+					buttonsEnabler();
+					forgotten.visible = opt.old; 
+					
+					navi.disable(false);
+					blockButtons(false);
+					
+					label_second_current = "Настройка "+labelParentPadejS+ (currentActionDeviceId+1);
+					changeSecondLabel( "Настройка "+labelParentPadejS+ (currentActionDeviceId+1) + label_jumper );
+				}
+			}
+		}
+	}
+}

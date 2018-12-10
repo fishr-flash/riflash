@@ -1,0 +1,90 @@
+package components.screens.ui
+{
+	import components.abstract.functions.loc;
+	import components.abstract.servants.TabOperator;
+	import components.abstract.servants.WidgetMaster;
+	import components.basement.UI_BaseComponent;
+	import components.interfaces.IWidget;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.statics.OPERATOR;
+	import components.screens.opt.OptRelay;
+	import components.static.CMD;
+	import components.system.SavePerformer;
+	
+	public class UIRelayMenu extends UI_BaseComponent implements IWidget
+	{
+		private var opts:Vector.<OptRelay>;
+		private var lastscreen:int;
+		
+		public function UIRelayMenu()
+		{
+			super();
+			
+			initNavi();
+			navi.setUp( onChoose, 50 );
+			
+			var len:int = OPERATOR.dataModel.getData(CMD.CTRL_COUNT_OUT)[0][0];
+			for (var i:int=0; i<len; i++) {
+				navi.addButton( loc("relay")+" "+(i+1), i, TabOperator.GROUP_BUTTONS + ((i+1) * 1000) );
+			}
+			opts = new Vector.<OptRelay>(len);
+			
+			starterCMD = [CMD.CTRL_INIT_OUT,
+				CMD.CTRL_TEMPLATE_REACT_ST_PART, CMD.CTRL_TEMPLATE_REACT_ST_ZONE, CMD.CTRL_TEMPLATE_ALL_FIRE, 
+				CMD.CTRL_TEMPLATE_REACT_ST_EXT, CMD.CTRL_TEMPLATE_OUT,];
+		}
+		override public function open():void
+		{
+			super.open();
+			loadComplete();
+		}
+		override public function close():void
+		{
+			super.close();
+			WidgetMaster.access().unregisterWidget(CMD.CTRL_DOUT_SENSOR );
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.CTRL_GET_SENSOR,null,1,[0] ));
+		}
+		override public function put(p:Package):void
+		{
+			if (p.cmd == CMD.CTRL_TEMPLATE_OUT) {
+				loadComplete();
+				navi.selection = lastscreen;
+				onChoose( lastscreen );
+				WidgetMaster.access().registerWidget(CMD.CTRL_DOUT_SENSOR, this );
+				send();
+			}
+			if (p.cmd == CMD.CTRL_DOUT_SENSOR) {
+				var len:int = opts.length;
+				for (var i:int=0; i<len; i++) {
+					if( opts[i] )
+						opts[i].put(p);
+				}
+			}
+		}
+		private function onChoose(n:int):void
+		{
+			SavePerformer.closePage();
+			if (n>=0) {
+				if (!opts[n]) {
+					opts[n] = new OptRelay(n+1);
+					addChild( opts[n] );
+				}
+				lastscreen = n;
+				opts[n].open();
+				
+				var len:int = opts.length;
+				for (var i:int=0; i<len; i++) {
+					if (opts[i]) {
+						opts[i].visible = n == i;
+						if (n == i)
+							changeSecondLabel( loc("relay")+" "+(i+1) );
+						else
+							opts[i].close();
+					}
+				}
+			}
+		}
+	}
+}

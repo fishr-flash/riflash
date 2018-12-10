@@ -1,0 +1,112 @@
+package components.screens.ui
+{
+	import flash.events.Event;
+	
+	import components.abstract.GroupOperator;
+	import components.basement.UI_BaseComponent;
+	import components.events.GUIEventDispatcher;
+	import components.events.SystemEvents;
+
+	public class UIUpdateDual extends UI_BaseComponent
+	{
+		private var topUpdate:UITopUpdate;
+		private var bottomUpdate:UIBottomUpdate;
+		private var go:GroupOperator;
+		
+		public function UIUpdateDual()
+		{
+			super();
+			
+			topUpdate = new UITopUpdate;
+			addChild( topUpdate );
+			topUpdate.y = globalY;
+			
+			go = new GroupOperator;
+			
+			globalY += 350;
+			
+			go.add("d", drawSeparator(740) );
+			
+			bottomUpdate = new UIBottomUpdate;
+			addChild( bottomUpdate );
+			bottomUpdate.y = globalY;
+			go.add("d", bottomUpdate );
+			
+			GUIEventDispatcher.getInstance().addEventListener( SystemEvents.onBlockNavigation, onBlockNavi );
+		}
+		override public function open():void
+		{
+			super.open();
+			loadComplete();
+			topUpdate.open();
+			topUpdate.addEventListener( "heightChanged", onResize );
+			go.movey("d", topUpdate.y + topUpdate.height );
+			bottomUpdate.open();
+		/*	if (topUpdate.firmwareInProgress)
+				bottomUpdate.block();
+			if (bottomUpdate.firmwareInProgress)
+				topUpdate.block();*/
+		}
+		override public function close():void
+		{
+			super.close();
+			topUpdate.close();
+			bottomUpdate.close();
+		}
+		private function onBlockNavi(e:SystemEvents):void
+		{
+			if (e.isBlock()) {
+				topUpdate.block();
+				bottomUpdate.block();
+			}
+		}
+		private function onResize(e:Event):void
+		{
+			go.movey("d", topUpdate.y + topUpdate.height );
+		}
+	}
+}
+import components.abstract.servants.K16BottomUpdateNinja;
+import components.protocol.statics.SERVER;
+import components.screens.ui.UIUpdate;
+
+class UITopUpdate extends UIUpdate
+{
+	public function UITopUpdate()
+	{
+		super();
+		
+		//fwservant.sendAddress = SERVER.ADDRESS_TOP;
+		var tunnelOnline:String= "Обновлений для программного обеспечения верхней платы - нет";
+		getField(0,2).setName("Текущая версия верхней платы:");
+	}
+	public function block():void
+	{	
+		bUpload.disabled = true;
+	}
+}
+	
+class UIBottomUpdate extends UITopUpdate
+{
+	public function UIBottomUpdate()
+	{
+		super();
+		
+		//fwservant.sendAddress = SERVER.ADDRESS_BOTTOM;
+		var tunnelOnline:String = "Обновлений для программного обеспечения нижней платы - нет";
+		getField(0,2).setName("Текущая версия нижней платы:");
+	}
+	protected function setNinja():void
+	{
+		ninja = K16BottomUpdateNinja.access();
+	}
+	protected function showVersion():void
+	{
+		var a:Array = (SERVER.BOTTOM_VER_INFO[1][0] as String).split(".");
+		/**
+		var a:Array = (p.getStructure(2)[0] as String).split(".");
+		firmwareFrameB.deviceLabel = p.getStructure(1)[0] + " ("+p.getStructure(1)[1] + " "+ String(a[1]+"."+a[2])+")";
+		*/
+		getField(0,2).setCellInfo( SERVER.BOTTOM_VER_INFO[0][0] + " ("+SERVER.BOTTOM_VER_INFO[0][1] + " "+ String(a[1]+"."+a[2])+")" );
+	}
+}

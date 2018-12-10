@@ -1,0 +1,26 @@
+package components.screens.opt
+{
+	import components.basement.OptionsBlock;
+	import components.gui.fields.FSCheckBox;
+	import components.static.CMD;
+	
+	public class OptWifiControl extends OptionsBlock
+	{
+		public function OptWifiControl()
+		{
+			super();
+			
+			operatingCMD = CMD.WIFI_ST_SETTINGS;
+			
+			createUIElement( new FSCheckBox, operatingCMD, "Подключаться к сети с лучшим сигналом", null, 1 );
+			attuneElement( 300 );
+			createUIElement( new FSCheckBox, operatingCMD, "Подключаться к открытым сетям Wi-Fi", null, 2 );
+			attuneElement( 300 );
+		}
+		
+		override public function putRawData(a:Array):void
+		{
+			distribute( a, operatingCMD );
+		}
+	}
+}

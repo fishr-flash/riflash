@@ -1,0 +1,225 @@
+package components.screens.ui
+{
+	import components.abstract.RegExpCollection;
+	import components.abstract.functions.loc;
+	import components.basement.UI_BaseComponent;
+	import components.gui.fields.FSCheckBox;
+	import components.gui.fields.FSComboBox;
+	import components.gui.fields.FSShadow;
+	import components.gui.fields.FSSimple;
+	import components.gui.fields.FormString;
+	import components.interfaces.IFormString;
+	import components.protocol.Package;
+	import components.static.CMD;
+	import components.static.DEVICES;
+	import components.static.PAGE;
+	import components.system.UTIL;
+	
+	public class UIRSysEvents extends UI_BaseComponent
+	{
+		public function UIRSysEvents()
+		{
+			super();
+			var wid:int = 350;
+			var cwid:int = 70;
+			globalX = 370;
+			var list:Array = UTIL.getComboBoxList( [[0,loc("g_no")],[1,loc("k5_sysev_one")],[2,loc("k5_sysev_two")],[3,loc("k5_sysev_three")]] );
+			addui( new FSComboBox, CMD.K5_MAIN_ATEST, loc("k5_sysev_autotests"), onAmount, 1, list );
+			attuneElement( 161, cwid, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			
+			var time_list:Array = [ {label:"00:00", data:"00:00"},
+				{label:"08:00", data:"08:00"},
+				{label:"16:00", data:"16:00"} ];
+			
+			var reg:RegExp = new RegExp("^("+RegExpCollection.RE_00to2359+")$");
+			
+			addui( new FSComboBox, CMD.K5_MAIN_ATEST, loc("k5_sysev_at")+" 1", null,2,time_list,"0-9:",5,
+				new RegExp( reg ));
+			attuneElement( 161,cwid, FSComboBox.F_COMBOBOX_TIME );
+			addui( new FSComboBox, CMD.K5_MAIN_ATEST, loc("k5_sysev_at")+" 2", null,4,time_list,"0-9:",5,
+				new RegExp( reg ));
+			attuneElement( 161,cwid, FSComboBox.F_COMBOBOX_TIME );
+			addui( new FSComboBox, CMD.K5_MAIN_ATEST, loc("k5_sysev_at")+" 3", null,6,time_list,"0-9:",5,
+				new RegExp( reg ));
+			attuneElement( 161,cwid, FSComboBox.F_COMBOBOX_TIME );
+			
+			var anchor:int = globalY;
+			globalX = PAGE.CONTENT_LEFT_SHIFT;
+			
+			addui( new FormString, 0, loc("ui_sysev_gen_autotest"), null, 10 );
+			attuneElement( NaN, NaN, FormString.F_MULTYLINE );
+			getLastElement().y -= 76;
+			globalY = anchor;
+			
+			drawSeparator(641+109-140);
+			
+			time_list = [ {label:loc("g_off"), data:"00:00"},
+				{label:"08:00", data:"08:00"},
+				{label:"16:00", data:"16:00"} ];
+			
+			addui( new FSComboBox, CMD.K5_ADV_ATEST, loc("k5_sysev_atdop"), null,1,time_list,"0-9:",5,
+				new RegExp( reg ));
+			attuneElement( wid+151,cwid, FSComboBox.F_COMBOBOX_TIME | FSComboBox.F_ADAPTER_OVERRIDES_RECOVERY );
+			getLastElement().setAdapter( new MMMMtoHHMMAdapter );
+			
+			drawSeparator(641+109-140);
+			
+			wid = 500;
+			cwid = 70;
+			
+			addui( new FSShadow, CMD.K5_BIT_SWITCHES, "", null, 1 );
+			addui( new FSShadow, CMD.K5_BIT_SWITCHES, "", null, 2 );
+			addui( new FSShadow, CMD.K5_BIT_SWITCHES, "", null, 3 );
+			
+			FLAG_SAVABLE = false;
+			
+			addui( new FSCheckBox, 0, loc("k5_sysev_genevents"), on220w, 1 );
+			attuneElement( wid+cwid-13,cwid);
+
+			FLAG_SAVABLE = true;
+			
+			if (DEVICES.isDevice(DEVICES.K5) && DEVICES.release <= 4) {
+				addui( new FSSimple, CMD.K5_TIME_CPW, loc("k5_sysev_gen_events_period"), 
+					null, 1,null,"0-9",3, new RegExp( RegExpCollection.REF_0to255 ) );
+				attuneElement( wid,cwid);
+			} else {
+			
+				time_list = [ {label:"01:00", data:"01:00"},
+					{label:"05:00", data:"05:00"},
+					{label:"15:00", data:"15:00"},
+					{label:"30:00", data:"30:00"}];
+				
+				addui( new FSComboBox, CMD.K5_TIME_CPW, loc("k5_sysev_gen_events_period"), null,1,time_list,"0-9:",5,
+					new RegExp( RegExpCollection.REF_TIME_0005to3000));
+				attuneElement( wid,cwid, FSComboBox.F_COMBOBOX_TIME | FSComboBox.F_ADAPTER_OVERRIDES_RECOVERY );
+				getLastElement().setAdapter( new MMMMtoHHMMAdapter );
+			}
+			
+			FLAG_SAVABLE = false;
+			var isakb:Boolean = DEVICES.app != "006"; 
+			
+			addui( new FSCheckBox, 0, loc("k5_sysev_evoke_akb_fail"), onFailAkb, 2 );
+			attuneElement( wid+cwid-13,cwid);
+			getLastElement().disabled = !isakb;
+			
+			addui( new FSCheckBox, 0, loc("k5_sysev_evoke_akb_low"), onDischargeAkb, 3 );
+			attuneElement( wid+cwid-13,cwid);
+			getLastElement().disabled = !isakb;
+			
+			FLAG_SAVABLE = true;
+			
+			starterCMD = [CMD.K5_BIT_SWITCHES,CMD.K5_ADV_ATEST,CMD.K5_TIME_CPW,CMD.K5_MAIN_ATEST];
+		}
+		override public function put(p:Package):void
+		{
+			switch(p.cmd) {
+				case CMD.K5_BIT_SWITCHES:
+					refreshCells( CMD.K5_BIT_SWITCHES );
+					
+					distribute( p.getStructure(), p.cmd );
+					var bf:int = p.getStructure()[0];
+					/*if ( (bf & 1 << 6) > 0 )
+						getField(0,1).setCellInfo(1);
+					else
+						getField(0,1).setCellInfo(0);*/
+					getField(0,2).setCellInfo(UTIL.isBit( 7, bf ));
+					getField(0,3).setCellInfo(UTIL.isBit( 6, bf ));
+					
+					bf = p.getStructure()[1];
+					getField(0,1).setCellInfo(UTIL.isBit( 7, bf ));
+					
+					getField(CMD.K5_TIME_CPW,1).disabled = !UTIL.isBit( 7, bf );
+					break;
+				case CMD.K5_ADV_ATEST:
+				case CMD.K5_TIME_CPW:
+					distribute( p.getStructure(), p.cmd );
+					break;
+				case CMD.K5_MAIN_ATEST:
+					getField(p.cmd, 1 ).setCellInfo( p.getStructure()[0] ); 
+					getField(p.cmd, 2 ).setCellInfo( mergeIntoTime( p.getStructure()[1], p.getStructure()[2] ) );
+					getField(p.cmd, 4 ).setCellInfo( mergeIntoTime( p.getStructure()[3], p.getStructure()[4] ) );
+					getField(p.cmd, 6 ).setCellInfo( mergeIntoTime( p.getStructure()[5], p.getStructure()[6] ) );
+					onAmount(null);
+					loadComplete();
+					break;
+				default:
+					break;
+			}
+		}
+		private function onAmount(t:IFormString):void
+		{
+			var f:IFormString = getField( CMD.K5_MAIN_ATEST, 1 );
+			var n:int = int(f.getCellInfo());
+			
+			getField(CMD.K5_ADV_ATEST, 1).disabled = true;
+			getField(CMD.K5_MAIN_ATEST, 6).disabled = true;
+			getField(CMD.K5_MAIN_ATEST, 4).disabled = true;
+			getField(CMD.K5_MAIN_ATEST, 2).disabled = true;
+			
+			switch(n) {
+				case 3:
+					getField(CMD.K5_MAIN_ATEST, 6).disabled = false;
+				case 2:
+					getField(CMD.K5_MAIN_ATEST, 4).disabled = false;
+				case 1:
+					getField(CMD.K5_MAIN_ATEST, 2).disabled = false;
+					getField(CMD.K5_ADV_ATEST, 1).disabled = false;
+					break;
+			}
+			if (t)
+				remember(t);
+		}
+		private function on220w():void
+		{
+			var b:Boolean = int((getField(0,1) as FSCheckBox).getCellInfo()) == 1;
+			var f1:IFormString = getField( CMD.K5_BIT_SWITCHES, 2 );
+			var bf:uint = UTIL.changeBit( int(f1.getCellInfo()), [6,7], b );
+			f1.setCellInfo( bf );
+			getField(CMD.K5_TIME_CPW,1).disabled = !b;
+			remember( f1 );
+		}
+		private function onFailAkb():void
+		{
+			var b:Boolean = int((getField(0,2) as FSCheckBox).getCellInfo()) == 1;
+			var f:IFormString = getField( CMD.K5_BIT_SWITCHES, 1 );
+			var bf:uint = UTIL.changeBit( int(f.getCellInfo()), 7, b );
+			f.setCellInfo( bf );
+			remember( f );
+		}
+		private function onDischargeAkb():void
+		{
+			var b:Boolean = int((getField(0,3) as FSCheckBox).getCellInfo()) == 1;
+			var f:IFormString = getField( CMD.K5_BIT_SWITCHES, 1 );
+			var bf:uint = UTIL.changeBit( int(f.getCellInfo()), 6, b );
+			f.setCellInfo( bf );
+			remember( f );
+		}
+	}
+}
+import components.interfaces.IDataAdapter;
+import components.interfaces.IFormString;
+import components.system.UTIL;
+class MMMMtoHHMMAdapter implements IDataAdapter
+{
+	public function adapt(value:Object):Object
+	{
+		var n:int = int(value);
+		var h:int = Math.floor(n/60);
+		var m:int = n - h*60;
+		return UTIL.fz(h,2)+":"+UTIL.fz(m,2);
+	}
+	public function change(value:Object):Object
+	{
+		return value;
+	}
+	public function perform(field:IFormString):void
+	{
+		
+	}
+	public function recover(value:Object):Object
+	{
+		var h:int = int(String(value).slice(0,2));
+		var m:int = int(String(value).slice(3,5));
+		return h*60+m;
+	}
+}

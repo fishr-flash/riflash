@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2"
+	xmlns:atom="http://www.w3.org/2005/Atom">
+	<Document>
+		<open>1</open>
+		<visibility>1</visibility>
+		<name><![CDATA[18.01.2013 21:55]]></name>
+		<Style id="track">
+			<LineStyle>
+				<color>7f0000ff</color>
+				<width>4</width>
+			</LineStyle>
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://earth.google.com/images/kml-icons/track-directional/track-0.png
+					</href>
+				</Icon>
+			</IconStyle>
+		</Style>
+		<Placemark id="tour">
+			<name><![CDATA[18.01.2013 21:55]]></name>
+			<description><![CDATA[]]>
+			</description>
+			<styleUrl>#track</styleUrl>
+			<gx:MultiTrack>
+				<altitudeMode>absolute</altitudeMode>
+				<gx:interpolate>1</gx:interpolate>
+				<gx:Track>
+					<when>2013-01-18T17:52:19.000Z</when>
+					<gx:coord>30.408898 59.84873 28.20001220703125</gx:coord>
+					<when>2013-01-18T17:52:20.000Z</when>
+					<gx:coord>30.409012 59.84859 10.29998779296875</gx:coord>
+					<when>2013-01-18T17:52:21.000Z</when>
+					<gx:coord>30.408629 59.849184 51.5</gx:coord>
+					<when>2013-01-18T17:52:22.000Z</when>
+					<gx:coord>30.408881 59.84875 33.4000244140625</gx:coord>
+					<when>2013-01-18T18:13:30.000Z</when>
+					<gx:coord>30.401133 59.843708 36.70001220703125</gx:coord>
+				</gx:Track>
+			</gx:MultiTrack>
+		</Placemark>
+		</Document>
+</kml>

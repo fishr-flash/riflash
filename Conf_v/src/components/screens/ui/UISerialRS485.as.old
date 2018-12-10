@@ -1,0 +1,62 @@
+package components.screens.ui
+{
+	import components.abstract.functions.loc;
+	import components.basement.UI_BaseComponent;
+	import components.gui.SimpleTextField;
+	import components.gui.fields.FSComboBox;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.statics.OPERATOR;
+	import components.static.CMD;
+	import components.system.SavePerformer;
+	import components.system.UTIL;
+	
+	public class UISerialRS485 extends UI_BaseComponent
+	{
+		public function UISerialRS485()
+		{
+			super();
+			
+			structureID = 2;
+			
+			var l:Array = UTIL.getComboBoxList([[0,loc("port_rs232_not_in_use")],[1,loc("port_rs232_p_ritmbin")],[2,loc("port_omnicomm")],[3,loc("port_j1708")]]);
+				
+			addui( new FSComboBox, CMD.VR_SERIAL_USE, loc("port_rs232_purpose"), null, 1, l );
+			attuneElement( 150, 250, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			
+			drawSeparator();
+			
+			var t:SimpleTextField = new SimpleTextField(loc("port_warning"));
+			addChild( t );
+			t.x = globalX;
+			t.y = globalY;
+			
+			starterCMD = CMD.VR_SERIAL_USE;
+		}
+		override public function put(p:Package):void
+		{
+			SavePerformer.trigger({"cmd":refine});
+			pdistribute(p);
+			loadComplete();
+		}
+		private function refine(value:Object):int
+		{
+			if(value is int) {
+				switch(value) {
+					case CMD.VR_SERIAL_USE:
+						return SavePerformer.CMD_TRIGGER_TRUE;
+				}
+			} else {
+				
+				var a:Array = OPERATOR.getData(CMD.CAN_CAR_ID);
+				
+				var cmd:int = value.cmd;
+				RequestAssembler.getInstance().fireEvent( new Request(CMD.CAN_CAR_ID,null,1,[0]));
+				//return SavePerformer.CMD_TRIGGER_BREAK;
+				//return SavePerformer.CMD_TRIGGER_CONTINUE;
+			}
+			return SavePerformer.CMD_TRIGGER_FALSE;
+		}
+	}
+}

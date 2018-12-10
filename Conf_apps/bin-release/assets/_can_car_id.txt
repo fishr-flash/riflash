@@ -1,0 +1,50 @@
+﻿// Строка должна содержать 4 фрагмента разделенных Таб'ом, а не пробелом. 
+// can car id [tab] марка [tab] модель [tab] год
+// Внимание! Строка с Tab'ом ПОСЛЕ года будет воспринята как ошибочная, как и пустая строка
+1	Mercedes	Actros 2,3	2008
+2	Skoda	Octavia FL	2010
+3	Volkswagen	Transporter	до 2012
+4	Toyota	Camry	2012
+5	Audi	A6	2007
+6	Skoda	Fabia	2010
+7	Opel	Astra H	2009
+8	Iveco	Trakker	2005
+9	MAN	TGA, TGL, TGS, TGX, TGM	2005
+10	DAF	XF 105	2012
+11	Scania	P-serie	2012
+12	Volkswagen	Caddy	2010
+15	Ford	Transit	2012
+16	BMW	X6	2010
+17	Mercedes	Axor	2008
+18	Toyota	Land Cruiser 200	2012
+19	Toyota	Hilander	2012
+20	Johnston	C201	2012
+21	Mercedes	Actros, с активированным CoTel	2012
+22	Mercedes	Sprinter 	2012
+23	Iveco	Daily	2012
+24	Citroen	Jumper Euro5	2012
+25	JCB	260	2011
+26	Volvo	S80	2010
+27	Bobcat	S-630	2011
+28	Mercedes	G-класс	2012
+29	Volkswagen	Passat CC	2012
+30	Ford	Focus 3	2012
+31	Fiat	Doblo	2013
+32	Citroen	Jumper	2006-2012
+33	Volkswagen	Transporter	2013
+34	LandRover	Discovery4	2011
+35	LandRover	FreeLander	2012
+36	Claas	Axion 850	2013
+37	Ford	Tourneo Custom	2014
+38	Citroen	Berlingo	2014
+39	Renault	Logan2	2014
+40	Chevrolet	Tahoe	2013
+41	Toyota	RAV4	2012
+42	Honda	CR-V	2013
+43	Ford	Explorer	2013
+44	Infinity	G25	2013
+45	Iveco	EuroCargo	2012
+46	Volkswagen	Crafter	2012
+47	Volkswagen	Polo	2013
+48	AHWI	RT400	2012
+49	Volkswagen	Amarok	2013

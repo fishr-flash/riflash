@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" compiles="true" parentProject="23b35d02-d729-497a-8aff-a0153d579b4c" projectUUID="23b35d02-d729-497a-8aff-a0153d579b4c" pureCatalystProject="false" sdkVersion="4.6.0" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d" version="15">
+  <projects>
+    <project filename="ConfLib.fxpl" position="2" projectUUID="30a359b0-9c15-472d-873e-13ec276d46cd" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+  </projects>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+    <linked location="D:/wip/flash/Conf_k16/libs" path="/libs" position="1" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+  </swc>
+  <misc/>
+  <theme/>
+  <mxmlFormattingPrefs groupAttributesByState="true" maxLineWidth="100" mxmlAlignAttributes="true" mxmlAttributeOrder="id,userLabel,includeIn,excludeFrom,visible,x,y,z,left,right,top,bottom,width,height,minWidth,minHeight,maxWidth,maxHeight,label" mxmlKeepAttributeValuesOrganized="true"/>
+</fxpProperties>

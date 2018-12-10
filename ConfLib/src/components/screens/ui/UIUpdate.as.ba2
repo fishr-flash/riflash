@@ -1,0 +1,190 @@
+package components.screens.ui
+{
+	import flash.events.Event;
+	import flash.utils.ByteArray;
+	
+	import mx.controls.ProgressBar;
+	import mx.events.ListEvent;
+	
+	import components.abstract.GroupOperator;
+	import components.abstract.resources.RES;
+	import components.abstract.servants.AutoUpdateNinja;
+	import components.abstract.servants.FirmwareServant;
+	import components.abstract.servants.ResizeWatcher;
+	import components.basement.UI_BaseComponent;
+	import components.events.GUIEventDispatcher;
+	import components.events.GUIEvents;
+	import components.events.SystemEvents;
+	import components.gui.MFlexTable;
+	import components.gui.PopUp;
+	import components.gui.fields.FSSimple;
+	import components.gui.fields.FormString;
+	import components.gui.triggers.TextButton;
+	import components.gui.visual.Separator;
+	import components.interfaces.IResizeDependant;
+	import components.protocol.statics.CLIENT;
+	import components.static.DEVICES;
+	import components.static.NAVI;
+	import components.static.PAGE;
+	
+	public class UIUpdate extends UI_BaseComponent implements IResizeDependant
+	{
+		private var ftable:MFlexTable;
+		
+		protected var bUpload:TextButton;
+		protected var go:GroupOperator;
+		protected var ninja:AutoUpdateNinja;
+		private var fwservant:FirmwareServant;
+		private var pbar:ProgressBar;
+		
+		protected var tunnelOnline:String = "Обновлений для программного обеспечения прибора - нет";
+		private var tunnelOffline:String = "Невозможно подключиться к серверу обновлений";
+		
+		private var rtmpath:String;
+		
+		public function UIUpdate()
+		{
+			super();
+			
+			var sepw:int = 740;
+			
+			go = new GroupOperator;
+			
+			FLAG_SAVABLE = false;
+			
+			addui( new FormString, 0, "Обновлений для программного обеспечения прибора - нет", null, 4 );
+			attuneElement( 500 );
+			go.add("nofw", getLastElement() );
+
+			globalY = PAGE.CONTENT_TOP_SHIFT;
+			
+			addui( new FSSimple, 0, "Текущая версия прибора:", null, 1 );
+			attuneElement( 225, 400, FSSimple.F_CELL_NOTEDITABLE_NOTEDITBOX );
+			go.add("fw", getLastElement() );
+			
+		/*	addui( new FSSimple, 0, "Всего обновлений для прибора:", null, 2 );
+			attuneElement( 225, NaN, FSSimple.F_CELL_NOTEDITABLE_NOTEDITBOX | FSSimple.F_CELL_ALIGN_LEFT);
+			go.add("fw", getLastElement() );*/
+			
+			bUpload = new TextButton;
+			addChild( bUpload );
+			bUpload.x = globalX  + 370;
+			bUpload.y = globalY;
+			bUpload.setUp( "Загрузить в прибор", askRtm );
+			go.add("fw", bUpload );
+			
+			addui( new FSSimple, 0, "Выбранная версия для обновления: ", null, 3 );
+			attuneElement( 245, 140, FSSimple.F_CELL_ALIGN_LEFT | FSSimple.F_CELL_NOTSELECTABLE );
+			go.add("fw", getLastElement() );
+			
+			var sep:Separator = drawSeparator(sepw); 
+			go.add("fw", sep );
+			
+			ftable = new MFlexTable;
+			addChild( ftable );
+			go.add("fw", ftable );
+			ftable.headers = ["Доступные версии для обновления"];
+			ftable.y = globalY;
+			ftable.x = globalX;
+			ftable.width = 700;
+			ftable.addEventListener( Event.CHANGE, onChange );
+			ftable.variableRowHeight = true;
+			
+			pbar = new ProgressBar;
+			addChild( pbar );
+			pbar.y = globalY;
+			pbar.x = globalX;
+			pbar.width = 700;
+			pbar.height = 40;
+			pbar.label= "";
+			pbar.mode = "manual";
+			pbar.maximum = 100;
+			pbar.minimum = 0;
+			go.add("fwload", pbar );
+			
+			ninja = AutoUpdateNinja.access();
+		}
+		override public function open():void
+		{
+			super.open();
+			
+			ResizeWatcher.addDependent(this);
+			
+			if( CLIENT.AUTOPAGE_WHILE_WRITING == 0 ) {
+			
+				go.show("nofw");
+				if (int(DEVICES.getBootloader()) == 0)
+					getField(0,1).setCellInfo( DEVICES.getFullVersion() );
+				else
+					getField(0,1).setCellInfo( DEVICES.getFullVersion() + "." + DEVICES.getBootloader() );
+				bUpload.disabled = false;
+				ninja.askTableList(onGetList);
+				loadComplete();
+			} else {
+				GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+					null );
+			}
+		}
+		public function localResize(w:int, h:int, real:Boolean=false):void
+		{
+			ftable.height = h - 170;
+		}
+		private function onGetList(a:Array):void
+		{
+			if (a) {
+				ftable.put(a);
+				getField(0,2).setCellInfo( a.length );
+				getField(0,3).setCellInfo( a[a.length-1][1] );
+				rtmpath = a[a.length-1][2];
+				ResizeWatcher.doResizeMe(this);
+				go.show("fw");
+			}
+		}
+		private function onChange(e:Event):void
+		{
+			if (e is ListEvent) {
+				rtmpath = (e as ListEvent).itemRenderer.data[1];
+				getField(0,3).setCellInfo( (e as ListEvent).itemRenderer.data[0] );
+			}
+		}
+		private function askRtm():void
+		{
+			ninja.getRtm( rtmpath, onGetRtm );
+			bUpload.disabled = true;
+			ftable.visible = false;
+			pbar.visible = true;
+		}
+		private function onGetRtm(b:ByteArray):void
+		{
+			if (!fwservant) {
+				fwservant = new FirmwareServant;
+				fwservant.addEventListener( GUIEvents.EVOKE_BLOCK, onFwStart );
+				fwservant.addEventListener( Event.CHANGE, onFwProgress );
+			}
+			fwservant.put(b);
+			fwservant.write();
+		}
+		protected function onFwStart(e:Event):void
+		{
+			GUIEventDispatcher.getInstance().fireSystemEvent( SystemEvents.onBlockNavigation, {"isBlock":true} );
+			pbar.setProgress( 0, 100 );
+			pbar.visible = true;
+			pbar.label= RES.FIRMWARE_TO_DEVICE;
+			//firmwareInProgress = true;
+			CLIENT.AUTOPAGE_WHILE_WRITING = NAVI.UPDATE;
+		}
+		protected function onFwProgress(e:Event):void
+		{
+			if (fwservant.percload == 100) {
+				pbar.label= "Обновление загружено";
+				//firmwareInProgress = false;
+				CLIENT.AUTOPAGE_WHILE_WRITING = 0;
+				PopUp.getInstance().composeOfflineMessage(PopUp.wrapHeader(RES.ATTENTION), 
+					PopUp.wrapMessage("После загрузки прошивки прибор обновляется не менее " 
+						+ DEVICES.getDeviceFirmwareTime() + " Не отключайте питание, дождитесь включения прибора." ));
+			} else
+				pbar.label= RES.FIRMWARE_TO_DEVICE+", осталось "+(100-fwservant.percload)+"%";
+			pbar.setProgress( fwservant.percload, 100 );
+		}
+	}
+}

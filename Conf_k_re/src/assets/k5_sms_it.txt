@@ -1,0 +1,58 @@
+00|Messa sotto protezione del settore numero|Gruppo di Zone Sorveglianza Attivato
+01|Protezione rimossa dal settore numero|Gruppo di Zone Sorveglianza Disattivato
+02|Attenzione! C'era disinserimento sotto costrizione numero di sezione|Costrizione
+03|Guasto del cavo piatto numero|Guasto del cavo piatto
+04|Attenzione! Allarme del cavo piatto numero|Allarme del cavo piatto
+05|Ripristino del cavo piatto numero|Ripristino del cavo piatto
+06|1|1
+07|2|2
+08|3|3
+09|4|4
+10|5|5
+11|6|6
+12|7|7
+13|8|8
+14|9|9
+15|10|10
+16|11|11
+17|12|12
+18|13|13
+19|14|14
+20|15|15
+21|16|16
+22|Nella sezione numero|Nella sezione
+23|Attenzione! E' stato premuto il pulsante di allarme "incendio" nell'oggetto numero|incendio
+24|Attenzione! E' stato premuto il pulsante di allarme "medico" nell'oggetto numero|medico
+25|Attenzione! E' stato premuto il pulsante di allarme "sicurezza" nell'oggetto numero|sicurezza
+26|Attenzione! Manomissione del pannello nell'oggetto numero|tamper
+27|C'era una transizione ad una alimentazione di riserva|Su alimentazione di riserva
+28|C'era una transizione verso l'alimentazione principale|Su l'alimentazione principale
+29|Il panello e stato riavviato|Riavvio
+30|Autotest|autotest
+31|Riserva|Riserva
+32|Il chiave numero|chiave #
+33|Il chiave numero 1|chiave #1
+34|Il chiave numero 2|chiave #2
+35|Il chiave numero 3|chiave #3
+36|Il chiave numero 4|chiave #4
+37|Il chiave numero 5|chiave #5
+38|Il chiave numero 6|chiave #6
+39|Il chiave numero 7|chiave #7
+40|Il chiave numero 8|chiave #8
+41|Il chiave numero 9|chiave #9
+42|Il chiave numero 10|chiave #10
+43|Il chiave numero 11|chiave #11
+44|Il chiave numero 12|chiave #12
+45|Il chiave numero 13|chiave #13
+46|Il chiave numero 14|chiave #14
+47|Il chiave numero 15|chiave #15
+48|Il chiave numero 16|chiave #16
+49|Remote preso sotto protezione|Presa remota
+50|Presa automatica della sezione di fuoco|Presa automatica
+51|Disarmo remoto|Disarmo remoto
+52|Codice non valido|Inserendo il codice errato
+53|La batteria e scarica|La batteria e scarica
+54|Batteria difettosa|Batteria difettosa
+55|GII|GII
+68|Caduta Linea Telefonica|Caduta Linea Telefonica
+69|Restauro: Caduta Linea Telefonica|Restauro: Caduta Linea Telefonica

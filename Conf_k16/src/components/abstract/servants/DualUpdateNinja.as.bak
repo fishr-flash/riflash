@@ -1,0 +1,234 @@
+package components.abstract.servants
+{
+	import flash.events.Event;
+	import flash.utils.ByteArray;
+	
+	import mx.utils.URLUtil;
+	
+	import components.abstract.functions.dtrace;
+	import components.events.GUIEventDispatcher;
+	import components.events.GUIEvents;
+	import components.protocol.ProtocolHttp;
+	import components.protocol.RequestAssembler;
+	import components.protocol.statics.SERVER;
+	import components.static.NAVI;
+
+	public class DualUpdateNinja
+	{
+		private static var inst:DualUpdateNinja;
+		public static function access():DualUpdateNinja
+		{
+			if(!inst)
+				inst = new DualUpdateNinja;
+			return inst;
+		}
+
+		private var fb:FirmwareBot;
+		private var fwDelegate:Function;
+		protected var adr:String;
+		protected var port:int;
+		private var connecterror:Boolean = false;
+		
+		public function getList():void
+		{
+			fb = null;
+			fwDelegate = null;
+			
+			GUIEventDispatcher.getInstance().dispatchEvent( new GUIEvents( GUIEvents.MAINMENU_APPEARANCE, 
+				{getButtonId:NAVI.UPDATE, getButtonStatus:0} ));
+			
+			//RequestAssembler.getInstance().HTTPSetUp( "http://device.ritm.ru:80/","","");
+			
+			adr = URLUtil.getServerName(SERVER.UPDATE_SERVER_ADR);
+			port = URLUtil.getPort(SERVER.UPDATE_SERVER_ADR);
+			if (port == 0)
+				port = 80;
+			
+			connecterror = false;
+			
+			RequestAssembler.getInstance().HTTPSetUp( "http://"+adr + ":"+port+"/","","");
+			RequestAssembler.getInstance().HTTPErrorListener( onHTTPError );
+			RequestAssembler.getInstance().HTTPRequest( "/device.json", onGetJson );
+			//RequestAssembler.getInstance().HTTPRequest( "/d16.json", onGetJson );
+		}
+		public function askTableList(f:Function):void
+		{
+			if (connecterror)
+				f(null);
+			else if (fb) {
+				f(fb.getTableList());
+			} else
+				fwDelegate = f;
+		}
+		public function getRtm(path:String, f:Function):void
+		{
+			RequestAssembler.getInstance().HTTPSetUp( "http://"+adr + ":"+port+"/","","");
+			RequestAssembler.getInstance().HTTPErrorListener( onHTTPError );
+			RequestAssembler.getInstance().HTTPRequest( path, onGetRtm);
+			fwDelegate = f;
+		}
+		protected function onGetJson(b:ByteArray):void
+		{
+			var s:String = b.readUTFBytes(b.bytesAvailable);
+			
+			if (isError(b)) {
+				connecterror = true;
+				if (fwDelegate is Function)
+					fwDelegate(null);
+				fwDelegate = null;
+			}
+			
+			var d:Object;
+			try {
+				d = JSON.parse(s);
+			} catch(error:Error) {
+				dtrace( "AutoUpdateNinja got bad JSON and avoided to parse it!" );
+			}
+			
+			if (d) {
+				fb = new FirmwareBot;
+				
+				var isupdate:Boolean = fb.isUpdate(d);
+				
+				if (isupdate) {
+					GUIEventDispatcher.getInstance().dispatchEvent( new GUIEvents( GUIEvents.MAINMENU_APPEARANCE, 
+						{getButtonId:NAVI.UPDATE, getButtonStatus:1} ));
+				} 
+				if (fwDelegate is Function)
+					fwDelegate(fb.getTableList());
+				fwDelegate = null;
+			}
+		}
+		
+		private function onGetRtm(b:ByteArray):void
+		{
+			if (fwDelegate is Function) {
+				if (isError(b)) {
+					fwDelegate(null);
+					connecterror = true;
+				} else
+					fwDelegate(b);
+			}
+			fwDelegate = null;
+		}
+		protected function onHTTPError(e:Event):void
+		{
+			trace("error " + e.type );
+		}
+		private function isError(b:ByteArray):Boolean
+		{
+			if ( ( b && b.length == 2 ) && (
+				(b[0] << 8 | b[1]) == ProtocolHttp.ERROR_SOCKET_KAPUT ||
+				(b[0] << 8 | b[1]) == ProtocolHttp.ERROR_NOT_EXIST ||
+				(b[0] << 8 | b[1]) == ProtocolHttp.ERROR_TIMEOUT ) ) {
+				GUIEventDispatcher.getInstance().dispatchEvent( new GUIEvents( GUIEvents.MAINMENU_APPEARANCE, 
+					{getButtonId:NAVI.UPDATE, getButtonStatus:0} ));
+				return true;
+			}
+			return false;
+		}
+	}
+}
+import components.abstract.DEVICESB;
+import components.protocol.statics.SERVER;
+import components.static.DEVICES;
+
+class FirmwareBot 
+{
+	private var device:Object;
+	private var patch:Array;
+	
+	public function isUpdate(a:Object):Boolean
+	{
+		device = getDevice(a as Array, DEVICES.name);
+		
+		if (SERVER.DUAL_DEVICE) { // необходимо хотябы одно совпадение для любого прбира чтобы отобразить "Есть обновление", 
+			// однако надо набить список patch поэтому прогонять приходится оба
+			lookForUpdate();
+			
+			device = getDevice(a as Array, DEVICESB.name);
+			
+			if (int(DEVICESB.bootloader)>0)	// проверка на бутлоадер
+				return lookForUpdate(DEVICESB.fullver+"."+DEVICESB.bootloader);
+			return lookForUpdate(DEVICESB.fullver);
+		} else
+			return lookForUpdate();
+	}
+	public function getTableList():Array
+	{
+		var a:Array = [];
+		if (patch) { 
+			var len:int = patch.length;
+			for (var i:int=0; i<len; i++) {
+				a.push( [getVer(patch[i].ver[0]), String(patch[i].desc), getVersionByApp(patch[i].ver), patch[i].rtm] );
+			}
+		}
+		return a;
+	}
+	private function lookForUpdate(key:String=null):Boolean
+	{
+		var keyword:String 
+		if (key)
+			keyword = key;
+		else if (int(DEVICES.getBootloader())>0)
+			keyword = DEVICES.getFullVersion()+"."+DEVICES.getBootloader();
+		else
+			keyword = DEVICES.getFullVersion();
+		
+		if (!device || !device.Firmware)
+			return false;
+		
+		var len:int = device.Firmware.length;
+		if (!key)
+			patch = [];
+		
+		for (var i:int=0; i<len; i++) {
+			if( isPartOf( device.Firmware[i].VersionOld, keyword ) )
+				patch.push( {desc:device.Firmware[i].Description, rtm:device.Firmware[i].Rtm, ver:device.Firmware[i].Version } );
+		}
+		return patch.length > 0;
+	}
+	private function getVer(v:String):String
+	{
+		var a:Array = v.split(".");
+		if (a && a[2])
+			return a[2];
+		return "";
+	}
+	private function getVersionByApp(a:Array):String
+	{
+		var currentapp:String = DEVICES.app;
+		var len:int = a.length;
+		var v:Array;
+		for (var i:int=0; i<len; i++) {
+			v = String(a[i]).split(".");
+			if (v && v[1] && currentapp == v[1] )
+				return a[i];
+		}
+		return "$error.getting.app";
+	}
+	public function getDevice(a:Array, keyname:String):Object
+	{
+		var len:int = a.length;
+		for (var i:int=0; i<len; i++) {
+			if( a[i].Name == keyname )
+				return a[i];
+		}
+		return null;
+	}
+	private function getfw():Array
+	{
+		return null;
+	}
+	private function isPartOf(a:Array, s:String):Boolean
+	{
+		if (a) {
+			var len:int = a.length;
+			for (var i:int=0; i<len; i++) {
+				if( a[i] == s )
+					return true;
+			}
+		}
+		return false;
+	}
+}

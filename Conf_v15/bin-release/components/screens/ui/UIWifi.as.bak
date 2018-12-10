@@ -1,0 +1,555 @@
+package components.screens.ui
+{
+	import components.abstract.servants.ResizeWatcher;
+	import components.abstract.servants.TabOperator;
+	import components.abstract.servants.TaskManager;
+	import components.basement.UI_BaseComponent;
+	import components.gui.SimpleTextField;
+	import components.gui.triggers.TextButton;
+	import components.gui.triggers.VisualButton;
+	import components.gui.visual.Separator;
+	import components.interfaces.IResizeDependant;
+	import components.interfaces.ITask;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.statics.CLIENT;
+	import components.protocol.statics.OPERATOR;
+	import components.screens.opt.OptWifi;
+	import components.screens.opt.OptWifiAdd;
+	import components.screens.opt.OptWifiControl;
+	import components.static.CMD;
+	import components.static.GuiLib;
+	import components.static.MISC;
+	import components.static.PAGE;
+	import components.system.Controller;
+	import components.system.SavePerformer;
+	import components.system.UTIL;
+	
+	import flash.events.Event;
+	
+	import mx.core.UIComponent;
+	
+	public class UIWifi extends UI_BaseComponent implements IResizeDependant
+	{
+		public static const WIFI_SECURITY_CB:Array = [[0,"Нет"],[1,"WEP"],[2,"WPA/WPA2"]];
+		
+		private var tListEmpty:SimpleTextField;
+		private var tNoDevices:SimpleTextField;
+		private var bOptions:TextButton;
+		private var bAddDevice:TextButton;
+		private var bRemoveDevice:TextButton;
+		private var bRestoreDevice:TextButton;
+		private var sep:Separator;
+		private var cont:UIComponent;
+		private var optAdd:OptWifiAdd;
+		private var opt:OptWifi;
+		private var optControl:OptWifiControl;
+		private var deleted:Array;				// сохраняется удаленная информация, для восстановления
+		
+		private const REFRESH_TIME:int = 30000; // 30 секунд
+		private const MAX_SAVED_NETS:int = 64;	// максимально возможное количество записанных сетей
+		private var SAVED_NETS:int = 0;			// количество сохраненных сетей (нобновляется каждый раз при вычитывании WIFI_NETS)
+		private var PENDING_DELETE:Boolean;		// ожидание удаления, true блокирует кнопку удалить. Всегда становиться false при приходе WIFI_NETS
+		private var SELECTED_IS_SAVED:Boolean;	// выбраная сеть сохранена на приборе
+		private var listwifi:Object;
+		private var storedwifi:Object;
+		
+		private const NET_ADD:int=1;
+		private const NET_REMOVE:int=2;
+		private const NET_RESOTRE:int=3;
+		private const NET_CONFIG:int=4;
+//		открывать  добавление вайфая когда было именена страница а пототм она исчезла
+		private const VIS_NO_DEVICES:int=1;
+		private const VIS_IS_DEVICES:int=2;
+		private const VIS_CONFIG:int=3;
+		private const VIS_ADD:int=4;
+		private const VIS_RESTORE:int=5;
+		
+		private const STRING_GENERAL_CONFIG:String = "Общие настройки";
+		
+		private var _lastSelected:int;
+		public function set lastSelected(value:int):void
+		{
+			_lastSelected = value;
+		}
+		public function get lastSelected():int 
+		{
+			return _lastSelected;
+		}
+		private var task:ITask;
+		private var state:ITask;
+		private var lastSSID:String;
+		
+		public function UIWifi()
+		{
+			super();
+			
+			initNavi();
+			navi.setUp( openNet );
+			
+			bOptions = new TextButton;
+			addChild( bOptions );
+			bOptions.setUp("Общие настройки", changeNet, NET_CONFIG);
+			bOptions.setFormat(true, 12);
+			bOptions.x = -150;
+			bOptions.y = 5;
+			TabOperator.getInst().add(bOptions);
+			
+			var s:Separator = drawSeparator(150);
+			s.x = -160;
+			s.y = 30;
+			
+			cont = new UIComponent;
+			MISC.subMenu.addChild(cont);
+			
+			sep = new Separator( 150 );
+			cont.addChild( sep );
+			sep.x = 10;
+			
+			bAddDevice = new TextButton;
+			cont.addChild( bAddDevice );
+			bAddDevice.setUp("Добавить сеть Wi-Fi", changeNet, NET_ADD );
+			bAddDevice.setFormat(true, 12);
+			bAddDevice.x = 10;
+			TabOperator.getInst().add(bAddDevice);
+			
+			bRemoveDevice = new TextButton;
+			cont.addChild( bRemoveDevice );
+			bRemoveDevice.setUp("Удалить сеть Wi-Fi", changeNet, NET_REMOVE );
+			bRemoveDevice.setFormat(true, 12);
+			bRemoveDevice.x = 10;
+			bRemoveDevice.disabled = true;
+			TabOperator.getInst().add(bRemoveDevice);
+			
+			bRestoreDevice = new TextButton;
+			cont.addChild( bRestoreDevice );
+			bRestoreDevice.setUp("Отменить удаление", changeNet, NET_RESOTRE );
+			bRestoreDevice.setFormat(true, 12);
+			bRestoreDevice.x = 10;
+			bRestoreDevice.disabled = true;
+			TabOperator.getInst().add(bRestoreDevice);
+			
+			globalY = 0;
+			
+			sep.y = globalY;
+			globalY += 10;
+			
+			bAddDevice.y = globalY;
+			globalY += bAddDevice.getHeight(); 
+			
+			bRemoveDevice.y = globalY;
+			globalY += bRemoveDevice.getHeight(); 
+			
+			bRestoreDevice.y = globalY;
+			globalY += bRestoreDevice.getHeight();
+			
+			cont.height = globalY + 30;
+			
+			tListEmpty = new SimpleTextField( "Список пуст", 170);
+			tListEmpty.setSimpleFormat( "center", -7 );
+			tListEmpty.y = -20;
+			cont.addChild( tListEmpty );
+			
+			tNoDevices = new SimpleTextField( "Нет зарегистрированных сетей Wi-Fi в приборе", 400);
+			tNoDevices.setSimpleFormat( "center",0,14,true );
+			tNoDevices.x = PAGE.CONTENT_LEFT_SUBMENU_SHIFT;
+			tNoDevices.y = PAGE.CONTENT_TOP_SHIFT;
+			addChild( tNoDevices );
+			
+			opt = new OptWifi(isNetStored);
+			addChild( opt );
+			opt.visible = false;
+			opt.x = PAGE.CONTENT_LEFT_SUBMENU_SHIFT;
+			opt.y = PAGE.CONTENT_TOP_SHIFT;
+			opt.addEventListener( OptWifi.EVENT_NEED_REFRESH, waitForState );
+			opt.addEventListener( OptWifi.EVENT_DATA_READY, onDataReady );
+			
+			optAdd = new OptWifiAdd;
+			addChild( optAdd );
+			optAdd.visible = false;
+			optAdd.x = PAGE.CONTENT_LEFT_SUBMENU_SHIFT;
+			optAdd.y = PAGE.CONTENT_TOP_SHIFT;
+			
+			optControl = new OptWifiControl;
+			addChild( optControl );
+			optControl.visible = false;
+			optControl.x = PAGE.CONTENT_LEFT_SUBMENU_SHIFT;
+			optControl.y = PAGE.CONTENT_TOP_SHIFT;
+			
+			starterCMD = [CMD.WIFI_ST_SETTINGS, CMD.WIFI_ST_CURRENT];
+		}
+		override public function open():void
+		{
+			super.open();
+			MISC.setSubmenuTopShift( 40 );
+			ResizeWatcher.addDependent(this);
+			SavePerformer.trigger( {"after":after} );
+		//	SavePerformer.trigger( {"after":after, "cmd":refine} );
+			task = TaskManager.callLater( refresh, REFRESH_TIME );
+			LOADING = true;
+		}
+		override public function close():void
+		{
+			super.close();
+			RequestAssembler.getInstance().clearStackLater();
+			MISC.setSubmenuTopShift();
+			ResizeWatcher.removeDependent(this);
+			lastSelected = navi.selection;
+			if (task)
+				task.kill();
+			if(state)
+				state.kill();
+		}
+		override public function put(p:Package):void
+		{
+			var len:int;
+			var vb:VisualButton;
+			var i:int;
+			
+			switch(p.cmd) {
+				case CMD.WIFI_ST_CURRENT:
+					if (p.getStructure(1)[1] == 1 && p.getStructure(2)[1] == 1) {
+						if (p.getStructure()[0] == 0 && p.getStructure(2)[0] == 0) {
+							navi.clear();
+							loadComplete();
+						} else {
+							listwifi = new Object;
+							storedwifi = new Object;
+							
+							RequestAssembler.getInstance().fireReadSequence(CMD.WIFI_ST_STORED, put, p.getStructure()[0]);
+							RequestAssembler.getInstance().fireReadSequence(CMD.WIFI_ST_VISIBLE, put, p.getStructure(2)[0]);
+						}
+					} else
+						waitForState();
+					break;
+				case CMD.WIFI_ST_STORED:
+					
+					/**
+					 	"Команда WIFI_NETS_STORED - список сохраненных сетей
+
+						Параметр 1 - Разрешено подключаться к сети, 0 - нет, 1 - да;
+						Параметр 2 - SSID; ( Имя сети, которую хотим удалить или добавить. );
+						Параметр 3 - Безопасность (0 - открытая сеть, 1 - WEP, 2 - WPA2-PSK AES )
+						Параметр 4 - Пароль;"													
+ 					**/
+					
+					// сохраняем в список все сети сохраненные на приборе
+					len = p.length;
+					SAVED_NETS = len;
+					for ( i=0; i<len; ++i) {
+						listwifi[p.getStructure(i+1)[1]] = p.getStructure(i+1);
+						storedwifi[p.getStructure(i+1)[1]] = p.getStructure(i+1);
+					}
+					break;
+				case CMD.WIFI_ST_VISIBLE:
+					
+					if (!listwifi)
+						listwifi = new Object;
+					
+					/**	
+							Параметр 1 - Заполнение структуры, 0 - нет информации в структуре, 1 - есть информация в структуре;
+							Параметр 2 - Добавление сети в прибор, 0 - сеть в прибор не добавлена , 1- сеть в прибор добавлена;
+							Параметр 3 - Разрешено подключаться к сети, 0 - нет, 1 - да;
+						Параметр 4 - SSID; ( Сохраненное имя сети или считанное из эфира, если сеть не добавлена в прибор );
+						Параметр 5 - Безопасность (0 - открытая сеть, 1 - WEP, 2 - WPA2-PSK AES ), сохраненное значение безопасности в прибор или считанное из эфира, если сеть не добавлена в прибор;
+							Параметр 6 - Пароль;
+						Параметр 7 - Состояние, 0-Отключено, 1-Подключено;
+						Параметр 8 - Уровень сигнала сети, 0-Сигнал потерян, 1-Плохой, 2-Слабый, 3-Хороший, 4-Сильный;
+						Параметр 9 - Скорость соединения, строка с обозначением размерности скорости;
+						Параметр 10 - Безопасность сети, считанная из эфира, строка, с безопасностью;
+						Параметр 11 - IP адрес.	
+						 * 
+						Параметр 1 0- SSID; ( Сохраненное имя сети или считанное из эфира, если сеть не добавлена в прибор );
+						Параметр 2 1- Безопасность (0 - открытая сеть, 1 - WEP, 2 - WPA2-PSK AES ), считанное из эфира, если сеть не добавлена в прибор;
+						Параметр 3 2- Состояние, 0-Отключено, 1-Подключено;
+						Параметр 4 3- Уровень сигнала сети, 0-Сигнал потерян, 1-Плохой, 2-Слабый, 3-Хороший, 4-Сильный;
+						Параметр 5 4- Скорость соединения, строка с обозначением размерности скорости;
+						Параметр 6 5- Безопасность сети, считанная из эфира, строка, с безопасностью;
+						Параметр 7 6- IP адрес.
+						 * */
+					
+					navi.clear();
+					PENDING_DELETE = false;
+					len = p.length;
+					if (len > 0)
+						tListEmpty.visible = false;
+					
+					var totalInList:int;
+					
+					// отображаем все сети доступные прибору
+					for (i=0; i<len; ++i) {
+						
+						if (p.getStructure(i+1)[2] == 1)
+							vb = new VisualButton( GuiLib.cSignalWifiCurrent );
+						else {
+							if (storedwifi && storedwifi[p.getStructure(i+1)[0]])
+								vb = new VisualButton( GuiLib.cSignalWifiFree );
+							else
+								vb = new VisualButton( GuiLib.cSignalWifiOther );
+						}
+						vb.visualfilter = new ShortStringFilter;
+						vb.attuneAsMenuButton( 10 );
+					//	vb.showLayer("lock", storedwifi && storedwifi[p.getStructure(i+1)[0]] != null && storedwifi[p.getStructure(i+1)[0]][0] == 0 );
+						vb.showLayer("lock", p.getStructure(i+1)[1] != 0);
+						vb.setPicX( 140 );
+						vb.frame = p.getStructure(i+1)[3]+1;
+						navi.addCustom( vb, p.getStructure(i+1)[0], i );
+						listwifi[p.getStructure(i+1)[0]] = p.getStructure(i+1);
+						
+						totalInList++;
+					}
+					// добавляем в список сохраненные сети, но в данный момент недоступные
+					for ( var key:String in listwifi ) {
+						if ( (listwifi[key] as Array).length == 4 ) {
+							
+							vb = new VisualButton( GuiLib.cSignalWifiFree );
+							vb.visualfilter = new ShortStringFilter;
+							vb.attuneAsMenuButton( 10 );
+							vb.showLayer("lock", storedwifi[key][2] != 0 );
+							
+							vb.setPicX( 140 );
+							vb.frame = 0;
+							navi.addCustom( vb, storedwifi[key][1], i++ );
+							totalInList++;
+						}
+					}
+					
+					if (!isAdding()) {
+						if ( lastSelected > -1 && totalInList > 0) {
+							if(!lastSSID) {
+								lastSelected = 0;
+							} else {
+								lastSelected = navi.getButtonIndexByName(lastSSID);
+							}
+							if (lastSelected > -1)
+								navi.selection = lastSelected;
+						} else
+							lastSelected = -1;
+						
+						if (lastSelected == -1)
+							changeNet( NET_CONFIG );
+						else
+							openNet( lastSelected, false );
+						/*
+						if (lastSelected >= 0 || p.length == 0 ) {
+							if (totalInList <= lastSelected)
+								lastSelected = 0;
+							navi.selection = lastSelected;
+							if (p.getStructure(lastSelected+1)[0] != opt.SSID || LOADING) {
+								openNet( lastSelected, false );
+							}
+						} else
+							changeNet( NET_CONFIG );
+						*/
+					}
+					ResizeWatcher.doResizeMe(this);
+					buttonEnabler();
+					LOADING = false;
+					loadComplete();
+					break;
+			}
+		}
+		public function localResize(w:int, h:int, real:Boolean=false):void
+		{
+			// положение блока с кнопками
+			cont.y = h-2-25;
+			// высота контейнера меню минус высота блока с кнопками
+			MISC.subMenuContainer.height = h - 117-20;
+			if (cont.y > navi.height + 115 )
+				cont.y = navi.height + 115;
+		}
+		private function openNet(value:int, clicked:Boolean=true):void
+		{
+			SELECTED_IS_SAVED = false;
+			if (value < 0 || (OPERATOR.dataModel.getData( CMD.WIFI_ST_STORED ) == null && OPERATOR.dataModel.getData( CMD.WIFI_ST_VISIBLE ) == null) )
+				changeNet(NET_CONFIG);
+			else {
+				var a:Array;
+				if (Controller.getInstance().isSaveActive() && !clicked) {
+					a = opt.getDeleteData();
+					visibilityManager(VIS_ADD);
+					optAdd.putRawData(a);
+				} else {
+					lastSelected = value;
+					/*var a11:Object = navi.getButtonName(lastSelected);
+					a = listwifi[navi.getButtonName(lastSelected)];//OPERATOR.dataModel.getData( CMD.WIFI_NETS )[value];
+					if (!a)
+						navi.getButtonName(lastSelected);*/
+					a = listwifi[navi.getButtonNameByIndex(lastSelected)];
+					opt.show( a, value+1 );
+					lastSSID = opt.SSID;
+					SELECTED_IS_SAVED = storedwifi && storedwifi[lastSSID];
+					changeSecondLabel( opt.SSID );
+					visibilityManager( VIS_IS_DEVICES );
+				}
+			}
+		}
+		private function changeNet(value:int):void
+		{
+			switch(value) {
+				case NET_ADD:
+					visibilityManager( VIS_ADD );
+					break;
+				case NET_REMOVE:
+					RequestAssembler.getInstance().fireEvent( new Request(CMD.WIFI_ST_CHANGE_STORED, null, 1, opt.getDeleteData() ));
+					deleted = opt.getRestoreData(); 
+					PENDING_DELETE = true;
+					waitForState();
+					buttonEnabler();
+					break;
+				case NET_RESOTRE:
+					visibilityManager( VIS_RESTORE );
+					break;
+				case NET_CONFIG:
+					optControl.putRawData( OPERATOR.dataModel.getData(CMD.WIFI_ST_SETTINGS)[0] );
+					visibilityManager( VIS_CONFIG );
+					break;
+			}
+		}
+		private function visibilityManager(vis:int):void
+		{
+			SavePerformer.closePage(false);
+			
+			switch (vis) {
+				case VIS_CONFIG:
+					lastSelected = -1;
+					navi.selection = -1;
+					lastSSID = null;
+					optControl.visible = true;
+					opt.visible = false;
+					tNoDevices.visible = false;
+					optAdd.visible = false;
+					changeSecondLabel( STRING_GENERAL_CONFIG );
+					break;
+				case VIS_IS_DEVICES:
+					optControl.visible = false;
+					opt.visible = true;
+					tNoDevices.visible = false;
+					optAdd.visible = false;
+					break;
+				case VIS_ADD:
+					navi.selection = -1;
+					SavePerformer.closePage(false);
+					optControl.visible = false;
+					opt.visible = false;
+					tNoDevices.visible = false;
+					optAdd.visible = true;
+					var a:Array = opt.getAddingData(); 
+					if ( a )
+						optAdd.putRawData(a);
+					break;
+				case VIS_RESTORE:
+					navi.selection = -1;
+					SavePerformer.closePage(false);
+					optControl.visible = false;
+					opt.visible = false;
+					tNoDevices.visible = false;
+					optAdd.visible = true;
+					optAdd.putRawData(deleted);
+					deleted = null;
+					break;
+			}
+			buttonEnabler();
+		}
+		private function buttonEnabler():void
+		{
+			bAddDevice.disabled = MAX_SAVED_NETS <= SAVED_NETS;
+			bRemoveDevice.disabled = navi.selection < 0 || PENDING_DELETE || !SELECTED_IS_SAVED;
+			bRestoreDevice.disabled = !deleted;
+		}
+		private function isAdding():Boolean
+		{
+			return optAdd.visible;
+		}
+		private function after():void
+		{
+			if (isAdding()) {
+				refresh();
+				openNet(lastSelected, false);
+			} else
+				lastSelected = navi.selection;
+			waitForState();
+		}
+		private function waitForState(e:Event=null):void
+		{
+		//	RequestAssembler.getInstance().fireEvent( new Request(CMD.GET_COUNT_WIFI_NETS, null, 1, [0,0] ));
+			if (!state)
+				state =	TaskManager.callLater( callState, CLIENT.TIMER_EVENT_SPAM );
+			else
+				state.repeat();
+			task.stop();
+		}
+		private function onDataReady(e:Event):void
+		{
+			visibilityManager( VIS_ADD );
+		}
+	/*	private function refine(value:Object):int
+		{
+			if (value is int) {
+				if (value == CMD.WIFI_NETS || value == CMD.WIFI_NETS_CHANGE)
+					return SavePerformer.CMD_TRIGGER_TRUE;
+				return SavePerformer.CMD_TRIGGER_FALSE;
+			} else {
+				switch(value.cmd) {
+					case CMD.WIFI_NETS:
+						RequestAssembler.getInstance().fireEvent( new Request(CMD.WIFI_NETS_CHANGE, null, 1, opt.getChangeData() ));
+						return SavePerformer.CMD_TRIGGER_CONTINUE;
+					case CMD.WIFI_NETS_CHANGE:
+						if( value.array[2] == "" )
+							value.array[2] = "unnamed";
+						//return SavePerformer.CMD_TRIGGER_CONTINUE;
+						break;
+				}
+			}
+			return SavePerformer.CMD_TRIGGER_FALSE;
+		}*/
+		
+		private function refresh(p:Package=null):void 
+		{
+			if (this.visible) {
+				if (p)
+					put(p);
+				else
+					RequestAssembler.getInstance().fireEvent( new Request( CMD.WIFI_ST_CURRENT, put));
+				task.repeat();
+			}
+		}
+		private function callState():void
+		{	// вызывается когда сеть недоступна, запрашивается чаще чем раз в пол минуты
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.WIFI_ST_CURRENT, onState) );
+		}
+		private function onState(p:Package):void
+		{
+			if (p.getStructure()[1] == 1 && p.getStructure(2)[1] == 1)
+				refresh(p);
+			else
+				state.repeat();
+		}
+		private function isNetStored(ssid:String):Array
+		{
+			if(storedwifi)
+				return storedwifi[ssid]
+			return null;
+		}
+	}
+}
+import components.interfaces.IVisualFilter;
+
+class ShortStringFilter implements IVisualFilter
+{
+	private var sourcestring:String;
+	
+	public function filter(s:String):String
+	{
+		sourcestring = s;
+		if (s.length > 10 )
+			return s.slice(0,10)+"...";
+		return s;
+	}
+	
+	public function get source():String
+	{
+		return sourcestring;
+	}
+}

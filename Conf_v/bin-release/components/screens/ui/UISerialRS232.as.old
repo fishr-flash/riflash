@@ -1,0 +1,37 @@
+package components.screens.ui
+{
+	import components.abstract.functions.loc;
+	import components.basement.UI_BaseComponent;
+	import components.gui.SimpleTextField;
+	import components.gui.fields.FSComboBox;
+	import components.protocol.Package;
+	import components.static.CMD;
+	import components.system.UTIL;
+	
+	public class UISerialRS232 extends UI_BaseComponent
+	{
+		public function UISerialRS232()
+		{
+			super();
+			
+			var l:Array = UTIL.getComboBoxList([[0,loc("port_rs232_not_in_use")],[1,loc("port_rs232_p_ritmbin")],[2,loc("port_rs232_d232")]]);
+				
+			addui( new FSComboBox, CMD.VR_SERIAL_USE, loc("port_rs232_purpose"), null, 1, l );
+			attuneElement( 150, 250, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			
+			drawSeparator();
+			
+			var t:SimpleTextField = new SimpleTextField(loc("port_warning"));
+			addChild( t );
+			t.x = globalX;
+			t.y = globalY;
+			
+			starterCMD = CMD.VR_SERIAL_USE;
+		}
+		override public function put(p:Package):void
+		{
+			pdistribute(p);
+			loadComplete();
+		}
+	}
+}

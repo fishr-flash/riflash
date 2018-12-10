@@ -1,0 +1,363 @@
+package components.screens.ui
+{
+	import flash.desktop.Clipboard;
+	import flash.desktop.ClipboardFormats;
+	
+	import components.abstract.GroupOperator;
+	import components.abstract.RegExpCollection;
+	import components.abstract.adapters.HexAdapter;
+	import components.abstract.adapters.ObjectAdapter;
+	import components.abstract.functions.loc;
+	import components.abstract.servants.TaskManager;
+	import components.basement.UI_BaseComponent;
+	import components.gui.Balloon;
+	import components.gui.PopUp;
+	import components.gui.fields.FSCheckBox;
+	import components.gui.fields.FSSimple;
+	import components.gui.fields.FormString;
+	import components.gui.triggers.TextButton;
+	import components.gui.visual.SIMSignal;
+	import components.interfaces.ITask;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.SocketProcessor;
+	import components.protocol.statics.OPERATOR;
+	import components.static.CMD;
+	import components.static.DEVICES;
+	import components.system.UTIL;
+	
+	public class UIGeneralOptionsK9 extends UI_BaseComponent
+	{
+		private var signal1:SIMSignal;
+		private var signal2:SIMSignal;
+		private var bImei:TextButton;
+		
+		private var buttons:Vector.<TextButton>;
+		
+		private var ID_IMEI:int=5;
+		private var ID_TEST1:int=0;
+		private var ID_TEST2:int=1;
+		private var ID_STOP:int=2;
+		private var ID_RESTART:int=3;
+		private var ID_LEDTEST:int=4;
+		
+		private var gsmtask:ITask;
+		private var blocktask:ITask;
+		private var go:GroupOperator;
+		
+		private var twoSim:Boolean;
+		private var simenabled:int;
+
+		private var fsDeviceTime:FSSimple;
+		private var fsLocalTime:FSSimple;
+		private var clocktask:ITask;
+		
+		public function UIGeneralOptionsK9()
+		{
+			super();
+			
+			twoSim = DEVICES.isDevice(DEVICES.K9) && int(DEVICES.app) == 5;
+			
+			var w:int = 270;
+			
+			addui( new FSSimple, CMD.OBJECT, loc("options_objnum"), null, 1, null, "A-Fa-f0-9", 4, new RegExp(RegExpCollection.REF_NOT_EMPTY) );
+			attuneElement( w+20, 60 );
+			getLastElement().setAdapter( new ObjectAdapter );
+			addui(  new FSSimple, CMD.MASTER_CODE, loc("options_masterkey"),null,1,null,"0-9",4, new RegExp(RegExpCollection.REF_NOT_EMPTY) );
+			getLastElement().setAdapter( new HexAdapter );
+			attuneElement( w+20, 60 );
+			
+			drawSeparator();
+			
+			createbutton( loc("options_stop_device"), onClick, globalX, ID_STOP, false);
+			createbutton( loc("options_restart_device"), onClick, globalX + 200 + 88, ID_RESTART);
+			globalY += 13;
+			
+			drawSeparator();
+			
+			go = new GroupOperator;
+			
+			signal1 = new SIMSignal;
+			addChild( signal1 );
+			signal1.x = 230+88;
+			signal1.y = globalY+2;
+			
+			if (twoSim)
+				createbutton( loc("g_test"), onClick, 400, ID_TEST1, false);
+			
+			createUIElement( new FormString, 0, loc("ui_gprs_signal_level_sim")+" 1",null,1);
+			attuneElement( w );
+			go.add("sim1",[getLastElement(),signal1]);
+			
+			if (twoSim) {
+				signal2 = new SIMSignal;
+				addChild( signal2 );
+				signal2.x = 230;
+				signal2.y = globalY+2;
+				
+				createbutton( loc("g_test"), onClick, 400, ID_TEST2, false);
+				
+				createUIElement( new FormString, 0, loc("ui_gprs_signal_level_sim")+" 2",null,2);
+				attuneElement( w );
+				go.add("sim2",[getLastElement(),signal2]);
+			}
+			
+			bImei = new TextButton;
+			bImei.x = w+50;
+			bImei.y = globalY;
+			bImei.setUp("", onClick, ID_IMEI );
+			
+			createUIElement( new FormString, 0, loc("options_modem_imei"),null,4);
+			attuneElement( w );
+			
+			addChild( bImei );
+			
+			drawSeparator();
+			
+			if (DEVICES.isDevice(DEVICES.K9))
+				createbutton( loc("options_led_test"), onClick, globalX, ID_LEDTEST);
+			else if (DEVICES.isDevice(DEVICES.K1)) {
+				addui( new FSCheckBox, CMD.K9_IMEI_IDENT, loc("gprs_use_imei_protocol"), null, 1 );
+				attuneElement( w + 23 );
+				
+				drawSeparator();
+				
+				fsDeviceTime = new FSSimple;
+				addChild( fsDeviceTime );
+				fsDeviceTime.x = globalX;
+				fsDeviceTime.y = globalY;
+				fsDeviceTime.attune( FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_MULTYLINE );
+				fsDeviceTime.setName( loc("ui_date_indevice") );
+				fsDeviceTime.setWidth( 130 );
+				fsDeviceTime.setCellWidth( 165 );
+				
+				globalY += 30;
+				
+				fsLocalTime = new FSSimple;
+				addChild( fsLocalTime );
+				fsLocalTime.x = globalX;
+				fsLocalTime.y = globalY;
+				fsLocalTime.attune( FSSimple.F_CELL_NOTSELECTABLE| FSSimple.F_MULTYLINE );
+				fsLocalTime.setName( loc("ui_date_inlocal") );
+				fsLocalTime.setCellWidth( 165 );
+				fsLocalTime.setWidth( 130 );
+				
+				globalY += 30;
+				
+				createbutton( loc("options_do_synchnize"), onSynch, globalX, ID_LEDTEST);
+				
+				globalY += 30;
+			}
+
+			if (twoSim)
+				starterCMD = [CMD.OBJECT,CMD.MASTER_CODE,CMD.K9_SIM_SWITCH,CMD.GSM_SIG_LEV,CMD.VER_INFO1];
+			else
+				starterCMD = [CMD.OBJECT,CMD.MASTER_CODE,CMD.GSM_SIG_LEV,CMD.VER_INFO1];
+			
+			if (DEVICES.isDevice(DEVICES.K1))
+			{
+				starterRefine( CMD.K9_IMEI_IDENT, true );
+				//starterRefine( CMD.DATE_TIME, true );
+			}
+				
+		}
+		override public function put(p:Package):void
+		{
+			switch(p.cmd) {
+				case CMD.OBJECT:
+				case CMD.MASTER_CODE:
+				case CMD.K9_IMEI_IDENT:
+					pdistribute(p);
+					break;
+				case CMD.VER_INFO1:
+					bImei.setName( p.getStructure()[3] );
+					loadComplete();
+					break;
+				case CMD.GSM_SIG_LEV:
+					if (twoSim) {
+						if( !buttons[ID_TEST1].disabled || !buttons[ID_TEST2].disabled ) {
+							switch(simenabled) {
+								case 1:
+									signal1.put(p.getStructure(1)[0]);
+									break;
+								case 2:
+									signal2.put(p.getStructure(2)[0]);
+									break;
+								default:
+									signal1.put(p.getStructure(1)[0]);
+									signal2.put(p.getStructure(2)[0]);
+									break;
+							}
+						}
+					} else
+						signal1.put(p.getStructure(1)[0]);
+					if (this.visible) {
+						if (!gsmtask)
+							gsmtask = TaskManager.callLater(requestSignal,TaskManager.DELAY_2SEC*2);
+						else
+							gsmtask.repeat();
+					}
+					break;
+				case CMD.K9_SIM_SWITCH:
+					if (p.success) {
+						if(!blocktask)
+							blocktask = TaskManager.callLater( onBlockTask, TaskManager.DELAY_10SEC*2 );
+						else
+							blocktask.repeat();
+					} else {
+						var sim1:Boolean = p.getParamInt(1,1) == 1;
+						go.alpha("sim1", sim1 ? 1 : 0.3 );
+						buttons[ID_TEST1].disabled = sim1;// || SERVER.isGeoritm(); 29.08.16 включен сигнал георитма.
+						
+						var sim2:Boolean = int(p.getParam(1,1)) == 2;
+						go.alpha("sim2", sim2 ? 1 : 0.5 );
+						buttons[ID_TEST2].disabled = sim2;// || SERVER.isGeoritm();
+						
+						simenabled = sim1 ? 1 : 2;
+					}
+					break;
+				case CMD.REBOOT:
+					popup = PopUp.getInstance();
+					popup.composeOfflineMessage( PopUp.wrapHeader("sys_attention"),	PopUp.wrapMessage("sys_k5_final_disconnect") );
+					SocketProcessor.getInstance().disconnectFinal();
+					//TaskManager.callLater( function():void{ SocketProcessor.getInstance().reConnect() }, TaskManager.DELAY_2SEC );
+					break;
+				
+				case CMD.DATE_TIME:
+					
+					if (p.success) {
+						RequestAssembler.getInstance().fireEvent( new Request(CMD.DATE_TIME,put));
+					} else {
+						var date:Date = new Date;
+						var formattedDate:String  = UTIL.formateZerosInFront( String(date.getDate()),2 )+"."
+							+UTIL.formateZerosInFront( String(int(date.getMonth()+1)),2 )+"."
+							+date.getFullYear()+"      "
+							+UTIL.formateZerosInFront( String(date.getHours()),2)+":"
+							+UTIL.formateZerosInFront( String(date.getMinutes()),2)+":"
+							+UTIL.formateZerosInFront( String(date.getSeconds()),2);
+						fsLocalTime.setCellInfo( formattedDate );
+						
+						fsDeviceTime.setCellInfo( UTIL.formateZerosInFront( String(p.getStructure()[0]),2 )
+							+"."+UTIL.formateZerosInFront( String(p.getStructure()[1]),2)
+							+".20"+UTIL.formateZerosInFront( String(p.getStructure()[2]),2 )+ "      "
+							+UTIL.formateZerosInFront( String(p.getStructure()[3]),2)+":"
+							+UTIL.formateZerosInFront( String(p.getStructure()[4]),2)+":"
+							+UTIL.formateZerosInFront( String(p.getStructure()[5]),2) );
+						
+						onClock();
+					}
+					
+					break;
+			}
+		}
+		
+		private function onClock():void
+		{
+			if (!clocktask)
+				TaskManager.callLater( onClock, TaskManager.DELAY_1SEC );
+			else
+				clocktask.repeat();
+			
+			var date:Date = new Date;
+			var formattedDate:String  = UTIL.formateZerosInFront( String(date.getDate()),2 )+"."
+				+UTIL.formateZerosInFront( String(int(date.getMonth()+1)),2 )+"."
+				+date.getFullYear()+"      "
+				+UTIL.formateZerosInFront( String(date.getHours()),2)+":"
+				+UTIL.formateZerosInFront( String(date.getMinutes()),2)+":"
+				+UTIL.formateZerosInFront( String(date.getSeconds()),2);
+			fsLocalTime.setCellInfo( formattedDate );
+		}
+		override public function close():void
+		{
+			super.close();
+			if (gsmtask)
+				gsmtask.kill();
+			gsmtask = null;
+			if (blocktask)
+				blocktask.kill();
+			blocktask = null;
+			
+			if (clocktask)
+				clocktask.kill();
+			clocktask = null;
+		}
+		private function createbutton(name:String, delegate:Function, xpos:int, num:int, yincrease:Boolean=true):void
+		{
+			var b:TextButton = new TextButton;
+			addChild( b );
+			b.y = globalY;
+			b.x = xpos;
+			if (yincrease)
+				globalY += b.getHeight();
+			b.setUp( name, delegate, num );
+			if (!buttons)
+				buttons = new Vector.<TextButton>(6);
+			buttons[num] = b;
+		}
+		private function requestSignal():void
+		{
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.GSM_SIG_LEV,put));
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.VER_INFO1,put));
+		}
+		private function onClick(num:int):void
+		{
+			switch(num) {
+				case ID_IMEI:
+					//var a:Object = OPERATOR.dataModel.getData(CMD.VER_INFO1);
+					var copy:String = String(OPERATOR.dataModel.getData(CMD.VER_INFO1)[0][3]);
+					Clipboard.generalClipboard.clear();
+					Clipboard.generalClipboard.setData(ClipboardFormats.TEXT_FORMAT, copy);
+					
+					Balloon.access().show("options_imei_copied", "\""+copy+"\" " +loc("options_in_buffer") );
+					break;
+				case ID_STOP:
+					RequestAssembler.getInstance().fireEvent( new Request(CMD.K5_STOP_PANEL,null,1,[1]));
+					buttons[ID_STOP].disabled = true;
+					//TaskManager.callLater( function():void {buttons[ID_STOP].disabled = SERVER.isGeoritm()}, TaskManager.DELAY_3SEC );
+					break;
+				case ID_RESTART:
+					RequestAssembler.getInstance().fireEvent( new Request(CMD.REBOOT,put,1,[1]));
+					loadStart();
+					blockNaviSilent = true;
+					break;
+				case ID_LEDTEST:
+					RequestAssembler.getInstance().fireEvent( new Request(CMD.K9_LED_TEST,null,1,[1]));
+					buttons[ID_LEDTEST].disabled = true;
+					//TaskManager.callLater( function():void {buttons[ID_LEDTEST].disabled = SERVER.isGeoritm()}, TaskManager.DELAY_3SEC );
+					break;
+				case ID_TEST1:
+				case ID_TEST2:
+					switch(num) {
+						case ID_TEST1:
+							RequestAssembler.getInstance().fireEvent( new Request(CMD.K9_SIM_SWITCH,put,1,[1]));
+							break;
+						case ID_TEST2:
+							RequestAssembler.getInstance().fireEvent( new Request(CMD.K9_SIM_SWITCH,put,1,[2]));
+							break;
+					}
+					buttons[ID_TEST1].disabled = true;
+					buttons[ID_TEST2].disabled = true;
+					Balloon.access().show( loc("g_please_wait"), loc("gms_try_register") );
+					break;
+			}
+		}
+		private function onBlockTask():void
+		{
+			if (this.visible)
+				RequestAssembler.getInstance().fireEvent( new Request(CMD.K9_SIM_SWITCH,put));
+		}
+		
+		private function onSynch():void
+		{
+			var d:Date = new Date;
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.DATE_TIME,put,0,[d.date, d.month+1, int(String(d.getFullYear()).slice(2)), d.hours, d.minutes, d.seconds, getDay() ]));
+			function getDay():int
+			{
+				if( d.day == 7 )
+					return 1;
+				return d.day + 1;
+			}
+		}
+	}
+}

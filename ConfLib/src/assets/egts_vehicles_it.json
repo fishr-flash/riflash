@@ -1,0 +1,35 @@
+{
+	"vehicles":
+	[
+		"Non selezionato"
+		,"Passeggero ( Class M1 )"
+		,"Autobus ( Class M2 )"
+		,"Autobus ( Class M3 )" 
+		,"Camion leggeri ( Class N1 )" 
+		,"Camion pesante ( Class N2 )" 
+		,"Camion pesante ( Class N3 )" 
+		,"Motociclo ( Class L1e )" 
+		,"Motociclo ( Class L2e )" 
+		,"Motociclo ( Class L3e )" 
+		,"Motociclo ( Class L4e )" 
+		,"Motociclo ( Class L5e )" 
+		,"Motociclo ( Class L6e )" 
+		,"Motociclo ( Class L7e )" 
+	]
+	, "powers":
+	[	
+		"Non selezionato"
+		,"Benzina"
+		,"Diesel"
+		,"Condensato di gas naturale"
+		,"Propano liquido"
+		,"Di energia elettrica ( oltre a 42V e 100A/h )"
+		,"Idrogeno"
+		
+		
+		
+		
+		
+	]
+	
+}

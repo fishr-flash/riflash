@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" parentProject="4ffbc9cc-3a8b-4c8a-a943-ee1c4648392b" projectUUID="30a359b0-9c15-472d-873e-13ec276d46cd" pureCatalystProject="false" sdkVersion="4.6.0" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d" version="15">
+  <projects/>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+    <linked location="D:/wip/flash/ConfLib/libs/AccLib.swc" path="/libs/AccLib.swc" position="1" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+    <linked location="D:/wip/flash/ConfLib/libs/MQFlashMapsAPI_7.1.5_OSM.swc" path="/libs/MQFlashMapsAPI_7.1.5_OSM.swc" position="2" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+    <linked location="D:/wip/flash/ConfLib/libs/FxPDF.swc" path="/libs/FxPDF.swc" position="3" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+    <linked location="D:/wip/flash/ConfLib/libs/fzip.swc" path="/libs/fzip.swc" position="4" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+    <linked location="D:/wip/flash/ConfLib/libs/ImageDecoderLib.swc" path="/libs/ImageDecoderLib.swc" position="5" uuid="2f6b3fba-3586-4411-9d16-7a3864c99f5d"/>
+  </swc>
+  <misc/>
+  <theme/>
+  <mxmlFormattingPrefs groupAttributesByState="true" maxLineWidth="100" mxmlAlignAttributes="true" mxmlAttributeOrder="id,userLabel,includeIn,excludeFrom,visible,x,y,z,left,right,top,bottom,width,height,minWidth,minHeight,maxWidth,maxHeight,label" mxmlKeepAttributeValuesOrganized="true"/>
+</fxpProperties>

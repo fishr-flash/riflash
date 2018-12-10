@@ -1,0 +1,96 @@
+package components.screens.ui
+{
+	import components.abstract.functions.loc;
+	import components.abstract.servants.TabOperator;
+	import components.abstract.servants.WidgetMaster;
+	import components.basement.UI_BaseComponent;
+	import components.interfaces.IWidget;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.statics.OPERATOR;
+	import components.screens.opt.OptOut;
+	import components.static.CMD;
+	import components.static.DEVICES;
+	import components.system.SavePerformer;
+	
+	public class UIOutMenu extends UI_BaseComponent implements IWidget
+	{
+		private var opts:Vector.<OptOut>;
+		private var lastscreen:int;
+		private var titles:Array;
+		
+		public function UIOutMenu()
+		{
+			super();
+			
+			initNavi();
+			navi.setUp( onChoose, 50 );
+			
+			var names:Array;
+			if (DEVICES.isDevice(DEVICES.MS1) || DEVICES.isDevice(DEVICES.MT1)) {
+				names = [loc("out_ind_light"),loc("out_ind_sound")];
+				titles = [loc("out_ind_light_title"),loc("out_ind_sound_title")];
+			}
+			
+			var len:int = OPERATOR.dataModel.getData(CMD.CTRL_COUNT_OUT)[0][0];
+			for (var i:int=0; i<len; i++) {
+				if (names && names[i])
+					navi.addButton( names[i], i, TabOperator.GROUP_BUTTONS + ((i+1) * 1000) );
+				else
+					navi.addButton( loc("rfd_output")+" "+(i+1), i, TabOperator.GROUP_BUTTONS + ((i+1) * 1000) );
+			}
+			opts = new Vector.<OptOut>(len);
+			
+			starterCMD = [CMD.CTRL_INIT_OUT, CMD.CTRL_NAME_OUT,
+				CMD.CTRL_TEMPLATE_AL_PART, CMD.CTRL_TEMPLATE_ST_PART, CMD.CTRL_TEMPLATE_AL_LST_PART,
+				CMD.CTRL_TEMPLATE_UNSENT_MESS,
+				CMD.CTRL_TEMPLATE_MANUAL_CNT, CMD.CTRL_TEMPLATE_MANUAL_TIME,
+				CMD.CTRL_TEMPLATE_FAULT,
+				CMD.CTRL_TEMPLATE_OUT];
+		}
+		override public function close():void
+		{
+			super.close();
+			onChoose(-1);
+			WidgetMaster.access().unregisterWidget(CMD.CTRL_DOUT_SENSOR );
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.CTRL_GET_SENSOR,null,1,[0] ));
+		}
+		override public function put(p:Package):void
+		{
+			if (p.cmd == CMD.CTRL_TEMPLATE_OUT) {
+				loadComplete();
+				navi.selection = lastscreen;
+				onChoose( lastscreen );
+				WidgetMaster.access().registerWidget(CMD.CTRL_DOUT_SENSOR, this );
+				send();
+			}
+		}
+		private function onChoose(n:int):void
+		{
+			SavePerformer.closePage();
+			try {
+				if (!opts[n]) {
+					opts[n] = new OptOut(n+1);
+					addChild( opts[n] );
+				}
+				lastscreen = n;
+				opts[n].open();
+			} catch(error:Error) {}
+			
+			var len:int = opts.length;
+			for (var i:int=0; i<len; i++) {
+				if (opts[i]) {
+					opts[i].visible = n == i;
+					if (n == i) {
+						if (titles && titles[i])
+							changeSecondLabel( titles[i] );
+						else
+							changeSecondLabel( loc("rfd_output")+" "+(i+1) );
+					} else
+						opts[i].close();
+				}
+			}
+		}
+	}
+}

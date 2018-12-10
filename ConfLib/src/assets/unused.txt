@@ -1,0 +1,3 @@
+"track_note_send":"���������� ������� ������ 4-� ����� �������� � ����������� ���������\r����� � �������� �� CSD (������� �� ��������� ����)",
+"track_note_send":"The record number under 4 may lead to problem at CSD -connection \rwith the device (depend on the mobile network)",
+"track_note_send":"Una quantita di record inferiore a 4 puo portare a difficolta di installazione\rdel collegamento con il dispositivo per CSD (dipende dalla rete mobile)",

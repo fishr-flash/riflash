@@ -1,0 +1,69 @@
+00|Area number is armed|armed
+01|Area number is disarmed|disarmed
+02|Attention! There was disarming under duress of section number|Duress
+03|Fail of a loop number|fail of a loop
+04|Attention! The alarm loop number|Alarm loop
+05|Recovery of a loop number|recovery of a loop
+06|in|in 
+07|area # 1|area # 1 
+08|area # 2|area # 2 
+09|area # 3|area # 3 
+10|area # 4|area # 4 
+11|area # 5|area # 5 
+12|area # 6|area # 6 
+13|loop ¹ 1|loop 1 
+14|loop ¹ 2|loop 2 
+15|loop ¹ 3|loop 3 
+16|loop ¹ 4|loop 4 
+17|loop ¹ 5|loop 5 
+18|loop ¹ 6|loop 6 
+19|Warning! The alarm button "fire" is pressed at the object number|fire
+20|Warning! The alarm button "doctor" is pressed at the object number|doctor
+21|Warning! The alarm button "guard" is pressed at the object number|guard
+22|Warning! Panel tamper is activated at the object number|tamper
+23|There was a transition to the reserve power supply|On the backup power
+24|There was a transition to the main power|On the main power
+25|The panel was rebooted|Restart
+26|Autotest|autotest
+27|button STAY|button STAY 
+28|code # 1|code 1 
+29|code # 2|code 2 
+30|code # 3|code 3 
+31|code # 4|code 4 
+32|code # 5|code 5 
+33|code # 6|code 6 
+34|code # 7|code 7 
+35|code # 8|code 8 
+36|code # 9|code 9 
+37|code # 10|code 10 
+38|button EXIT|button EXIT 
+39|Vanish 12V|Vanish 12Â
+40|Autoarm|Autoarm
+41|key number 1|key 1 
+42|key number 2|key 2 
+43|key number 3|key 3 
+44|key number 4|key 4 
+45|key number 5|key 5 
+46|key number 6|key 6 
+47|key number 7|key 7 
+48|key number 8|key 8 
+49|key number 9|key 9 
+50|key number 10|key 10 
+51|key number 11|key 11 
+52|key number 12|key 12 
+53|key number 13|key 13 
+54|key number 14|key 14 
+55|key number 15|key 15 
+56|key number 16|key 16 
+57|reserve|reserve
+58|Battery malfunction|Battery malfunction
+59|Low battery|Low battery
+60|Remote arm|Remote arm
+61|Remote disarm|Remote disarm
+62|Input wrong code|Input wrong code
+63|Rapid Response Team|Rapid Response Team
+64|Battery discharge recovery|Battery discharge recovery
+65|Arming error |Arming error 
+66|Recovery: "Fire" button is pressed |Recovery: "Fire" button is pressed 
+67|Recovery: "Medical" button is pressed |Recovery: "Medical" button is pressed 
+68|Recovery: "Panic" button is pressed |Recovery: "Panic" button is pressed 

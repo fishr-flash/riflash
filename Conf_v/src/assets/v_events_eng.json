@@ -1,0 +1,151 @@
+[
+  {
+    "Group_ID":"1",
+    "MessagesGroup":"Inputs",
+    "Messages":
+    [
+      {"MSG_ID":"1", "Occurrence":"Alarm button 1 pressed", "Recovery":"Alarm button 1 released"},
+      {"MSG_ID":"2", "Occurrence":"Alarm button 2 pressed", "Recovery":"Alarm button 2 released"},
+      {"MSG_ID":"3", "Occurrence":"Alarm button 3 pressed", "Recovery":"Alarm button 3 released"},
+      {"MSG_ID":"4", "Occurrence":"Alarm button 4 pressed", "Recovery":"Alarm button 1 released"},
+      {"MSG_ID":"5", "Occurrence":"Signal at input 1 is on", "Recovery":"Signal at input 1 is off"},
+      {"MSG_ID":"6", "Occurrence":"Signal at input 2 is on", "Recovery":"Signal at input 2 is off"},
+      {"MSG_ID":"7", "Occurrence":"Signal at input 3 is on", "Recovery":"Signal at input 3 is off"},
+      {"MSG_ID":"8", "Occurrence":"Signal at input 4 is on", "Recovery":"Signal at input 4 is off"},
+      {"MSG_ID":"17",  "Occurrence":"Ignition is on", "Recovery":"Ignition is off"},
+      {"MSG_ID":"18",  "Occurrence":"Button 1 pressed", "Recovery":"Button 1 released"},
+      {"MSG_ID":"19",  "Occurrence":"Button 2 pressed", "Recovery":"Button 2 released"},
+      {"MSG_ID":"20",  "Occurrence":"Button 3 (Alarm) pressed", "Recovery":"Button 3 (Alarm) released"},
+      {"MSG_ID":"21",  "Occurrence":"Reed relay on tearing off triggered", "Recovery":"Reed relay on tearing off recovered"},
+      {"MSG_ID":"22",  "Occurrence":"Reed relay on external field triggered", "Recovery":"Reed relay on external field recovered"},
+      {"MSG_ID":"23",  "Occurrence":"External reed relay triggered", "Recovery":"External reed relay recovered"},
+      {"MSG_ID":"24",  "Occurrence":"Enclosure tampering", "Recovery":"Enclosure is closed"},
+      {"MSG_ID":"25", "Occurrence":"Test mode is on", "Recovery":"Test mode is off"}
+    ]
+  },
+  {
+    "Group_ID":"2",
+    "MessagesGroup":"Extender of inputs",
+    "Messages":
+    [
+      {"MSG_ID":"9", "Occurrence":"Signal at input 9 is on", "Recovery":"Signal at input 9 is off"},
+      {"MSG_ID":"10", "Occurrence":"Signal at input 10 is on", "Recovery":"Signal at input 10 is off"},
+      {"MSG_ID":"11", "Occurrence":"Signal at input 11 is on", "Recovery":"Signal at input 11 is off"},
+      {"MSG_ID":"12", "Occurrence":"Signal at input 12 is on", "Recovery":"Signal at input 12 is off"},
+      {"MSG_ID":"13", "Occurrence":"Signal at input 13 is on", "Recovery":"Signal at input 13 is off"},
+      {"MSG_ID":"14", "Occurrence":"Signal at input 14 is on", "Recovery":"Signal at input 14 is off"},
+      {"MSG_ID":"15", "Occurrence":"Signal at input 15 is on", "Recovery":"Signal at input 15 is off"},
+      {"MSG_ID":"16", "Occurrence":"Signal at input 16 is on", "Recovery":"Signal at input 16 is off"}
+    ]
+  },
+  {
+    "Group_ID":"3",
+    "MessagesGroup":"CAN (perimeter)",
+    "Messages":
+    [
+      {"MSG_ID":"26", "Occurrence":"Left hand front door is open", "Recovery":"Left hand front door isclosed"},
+      {"MSG_ID":"27", "Occurrence":"Right hand front door is open", "Recovery":"Right hand front door is closed"},
+      {"MSG_ID":"28", "Occurrence":"Right hand rear door is open", "Recovery":"Right hand rear door is closed"},
+      {"MSG_ID":"29", "Occurrence":"Left hand rear door is open", "Recovery":"Left hand rear door is closed"},
+      {"MSG_ID":"30", "Occurrence":"Hood is open", "Recovery":"Hood is closed"},
+      {"MSG_ID":"31", "Occurrence":"Trunk is open", "Recovery":"Trunk is closed"},
+      {"MSG_ID":"32", "Occurrence":"Arming by standard alarm system", "Recovery":"Disarming by standard alarm system"},
+      {"MSG_ID":"33", "Occurrence":"Standard security system alarm", "Recovery":"Standard system alarm cancel"}
+    ]
+  },
+  {
+    "Group_ID":"4",
+    "MessagesGroup":"CAN (transmission)",
+    "Messages":
+    [
+      {"MSG_ID":"34", "Occurrence":"Automatic transmission in position D", "Recovery":"Automatic transmission: position D is deactivated"},
+      {"MSG_ID":"35", "Occurrence":"Automatic transmission in position R", "Recovery":"Automatic transmission: position R is deactivated"},
+      {"MSG_ID":"36", "Occurrence":"Automatic transmission in position N", "Recovery":"Automatic transmission: position N is deactivated"},
+      {"MSG_ID":"37", "Occurrence":"Automatic transmission in position P", "Recovery":"Automatic transmission: position P is deactivated"},
+      {"MSG_ID":"38", "Occurrence":"Brake pedal is pressed", "Recovery":"Brake pedal is released"},
+      {"MSG_ID":"39", "Occurrence":"Parking brake is applied", "Recovery":"Parking brake is released"}
+    ]
+  },
+  {
+    "Group_ID":"5",
+    "MessagesGroup":"CAN (other)",
+    "Messages":
+    [
+      {"MSG_ID":"40", "Occurrence":"Vehicle driving", "Recovery":"Vehicle driving stop"},
+      {"MSG_ID":"41", "Occurrence":"Working mode is on", "Recovery":"Working mode is off"},
+      {"MSG_ID":"42", "Occurrence":"Switch key in ignition lock", "Recovery":"No switch key in ignition lock"},
+      {"MSG_ID":"43", "Occurrence":"АСС, power for vehicle additional systems is on", "Recovery":"АСС, power for vehicle additional systems is off"},
+      {"MSG_ID":"44", "Occurrence":"Ignition is on", "Recovery":"Ignition is off"},
+      {"MSG_ID":"45", "Occurrence":"Engine is started", "Recovery":"Engine is stopped"},
+      {"MSG_ID":"46", "Occurrence":"Marker light is on", "Recovery":"Marker light is off"},
+      {"MSG_ID":"47", "Occurrence":"Dim-light is on", "Recovery":"Dim-light is off"},
+      {"MSG_ID":"48", "Occurrence":"Distance light is on", "Recovery":"Distance light is off"},
+      {"MSG_ID":"49", "Occurrence":"Safety belt is not fastened", "Recovery":"Safety belt is fastened"},
+      {"MSG_ID":"50", "Occurrence":"Front window wiper is working", "Recovery":"Front window wiper is quiescent"},
+      {"MSG_ID":"51", "Occurrence":"Left turn indicator is on", "Recovery":"Left turn indicator is off"},
+      {"MSG_ID":"52", "Occurrence":"Right turn indicator is on", "Recovery":"Right turn indicator is off"},
+      {"MSG_ID":"53", "Occurrence":"Central lock is closed", "Recovery":"Central lock is open"}
+    ]
+  },
+  {
+    "Group_ID":"6",
+    "MessagesGroup":"Sensors",
+    "Messages":
+    [
+      {"MSG_ID":"54", "Occurrence":"External temperature sensor: above normal", "Recovery":"External temperature sensor: normal"},
+      {"MSG_ID":"55", "Occurrence":"External temperature sensor: below normal", "Recovery":"External temperature sensor: normal"},
+      {"MSG_ID":"56", "Occurrence":"Acceleration is exceeded", "Recovery":"Acceleration is normal"},
+      {"MSG_ID":"57", "Occurrence":"Tilt", "Recovery":"No tilt"},
+      {"MSG_ID":"58", "Occurrence":"Accident, impact", "Recovery":"Acceleration is normal"},
+      {"MSG_ID":"59", "Occurrence":"Tripping", "Recovery":"No tripping"},
+      {"MSG_ID":"60", "Occurrence":"Overturning", "Recovery":"No overturning"},
+      {"MSG_ID":"61", "Occurrence":"Driving", "Recovery":"Driving stop"},
+      {"MSG_ID":"62", "Occurrence":"Internal power supply voltage is below normal", "Recovery":"Internal power supply voltage is recovered"},
+      {"MSG_ID":"63", "Occurrence":"Engine is started", "Recovery":"Engine is stopped"},
+      {"MSG_ID":"64", "Occurrence":"External power supply voltage is below normal", "Recovery":"External power supply voltage is recovered"},
+      {"MSG_ID":"65", "Occurrence":"External power is off", "Recovery":"External power is on"},
+      {"MSG_ID":"66", "Occurrence":"Internal battery is charging", "Recovery":"Internal battery charging is off"}
+    ]
+  },
+    {
+      "Group_ID":"7",
+      "MessagesGroup":"Logical",
+      "Messages":
+      [
+        {"MSG_ID":"67", "Occurrence":"GSM-signal suppression", "Recovery":"No noise for GSM-signal"},
+        {"MSG_ID":"68", "Occurrence":"SMS sending failure", "Recovery":""},
+        {"MSG_ID":"69", "Occurrence":"Points are located", "Recovery":"No point location"},
+        {"MSG_ID":"70", "Occurrence":"Configuration cable connection", "Recovery":"Configuration cable disconnection"},
+        {"MSG_ID":"71", "Occurrence":"Remote configuring", "Recovery":"Remote configuring complete"},
+        {"MSG_ID":"72", "Occurrence":"Point 3D-location", "Recovery":"No point 3D-location"},
+        {"MSG_ID":"73", "Occurrence":"No connection with extender", "Recovery":"Communication with extender is established"},
+        {"MSG_ID":"74", "Occurrence":"Device restarting", "Recovery":""},
+        {"MSG_ID":"75", "Occurrence":"Access denied, wrong master code", "Recovery":"Access accepted"},
+        {"MSG_ID":"76", "Occurrence":"Mobile network operator base station changing", "Recovery":""},
+        {"MSG_ID":"77", "Occurrence":"Server connection retention mode is on", "Recovery":"Server connection retention mode is off"},
+        {"MSG_ID":"78", "Occurrence":"Follow mode is on", "Recovery":"Follow mode is off"},
+        {"MSG_ID":"84", "Occurrence":"Device history is deleted", "Recovery":""},
+        {"MSG_ID":"85", "Occurrence":"Speed is above threshold 1", "Recovery":"Speed is below threshold 1"},
+        {"MSG_ID":"86", "Occurrence":"Speed is above threshold 2", "Recovery":"Speed is below threshold 2"},
+        {"MSG_ID":"87", "Occurrence":"Speed is above threshold 3", "Recovery":"Speed is below threshold 3"},
+        {"MSG_ID":"88", "Occurrence":"Speed is above threshold 4", "Recovery":"Speed is below threshold 4"},
+        {"MSG_ID":"89", "Occurrence":"Speed is above threshold 5", "Recovery":"Speed is below threshold 5"},
+        {"MSG_ID":"90", "Occurrence":"Aggressive acceleration", "Recovery":"Acceleration is normal"},
+        {"MSG_ID":"91", "Occurrence":"Hard braking", "Recovery":"Acceleration is normal"},
+        {"MSG_ID":"92", "Occurrence":"Navigation receiver is switching on", "Recovery":"Navigation receiver is switching off"},
+        {"MSG_ID":"93", "Occurrence":"Communication unit is switching on", "Recovery":"Communication unit is switching off"}
+      ]
+  },
+    {
+      "Group_ID":"8",
+      "MessagesGroup":"Authentication and guard",
+      "Messages":
+      [
+        {"MSG_ID":"79", "Occurrence":"Touch memory code is read", "Recovery":""},
+        {"MSG_ID":"80", "Occurrence":"Arming", "Recovery":"Disarming"},
+        {"MSG_ID":"81", "Occurrence":"Authentication complete", "Recovery":"Authentication required"},
+        {"MSG_ID":"82", "Occurrence":"Attempt to start engine without authentication", "Recovery":""},
+        {"MSG_ID":"83", "Occurrence":"Service mode", "Recovery":"Service mode exit"}
+      ]
+  }
+]

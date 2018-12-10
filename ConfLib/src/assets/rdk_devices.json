@@ -1,0 +1,86 @@
+{
+	"devices":
+	[
+		{
+			"id":"1",
+			"loc_label":"rfd_gerkon"
+			
+			
+		},
+		{
+			"id":"2",
+			"loc_label":"rfd_yp_opt"
+			
+			
+		},
+		{
+			"id":"3",
+			"loc_label":""
+			
+			
+		},
+		{
+			"id":"4",
+			"loc_label":"rfd_volume"
+			
+			
+		},
+		{
+			"id":"5",
+			"loc_label":"ui_trinket"
+			
+			
+		},
+		{
+			"id":"6",
+			"loc_label":"navi_rf_rele"
+			
+			
+		},
+		{
+			"id":"7",
+			"loc_label":"rfd_keyboard"
+			
+			
+		},
+		{
+			"id":"8",
+			"loc_label":"rfd_ipr"
+			
+			
+		},
+		{
+			"id":"9",
+			"loc_label":"msgterm_d_msg_03"
+			
+			
+		},
+		{
+			"id":"10",
+			"loc_label":"rfd_gerkon_rdd3"
+			
+			
+		},
+		{
+			"id":"11",
+			"loc_label":"navi_panic_button"
+			
+			
+		},
+		{
+			"id":"12",
+			"loc_label":"rfd_lcd_keyboard"
+			
+			
+		},
+		{
+			"id":"13",
+			"loc_label":"rfd_rd_repeater"
+			
+			
+		}
+		
+		
+		
+	]
+}

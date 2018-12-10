@@ -1,0 +1,314 @@
+package components.screens.opt
+{
+	import components.abstract.RegExpCollection;
+	import components.abstract.adapters.HexAdapter;
+	import components.abstract.servants.CIDServant;
+	import components.abstract.servants.RPartServant;
+	import components.basement.OptionListBlock;
+	import components.gui.fields.FSComboBox;
+	import components.gui.fields.FormString;
+	import components.interfaces.IFlexListItem;
+	import components.interfaces.IFormString;
+	import components.protocol.Package;
+	import components.screens.ui.UIRWire;
+	import components.static.CMD;
+	import components.system.UTIL;
+	
+	public class OptRWire extends OptionListBlock implements IFlexListItem
+	{
+		private var snum:int;
+		private var fState:IFormString;
+		private var fNum:IFormString;
+		private var ptype:IFormString;
+	//	private var pair:OptRWire;
+		
+		public function OptRWire(s:int)
+		{
+			super();
+			
+			FLAG_VERTICAL_PLACEMENT = false;
+			globalX = 0;
+			
+			snum = s;
+			FLAG_SAVABLE = false;
+			fNum = addui( new FormString, 0, s.toString(), null, 1 );
+			attuneElement( 55 );
+			globalX += 55;
+			fState = addui( new FormString, CMD.K5_AWIRE_STATE, "", null, 1 );
+			attuneElement( 100 );
+			getLastElement().setAdapter( new StateAdapter );
+			
+			globalX += 100;
+			var l:Array = UTIL.getComboBoxList([[0,"Разомкнутое"],[1,"Замкнутое"]]);
+			addui( new FSComboBox, 3, "", onChange, snum, l);
+			attuneElement( NaN, 120, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			globalX += 125;
+			FLAG_SAVABLE = true;
+
+			addui( new FSComboBox, CMD.K5_AWIRE_PART_CODE, "", null, s  + UIRWire.TOTAL_WIRE, CIDServant.getEvent(CIDServant.CID_K5WIRE) );
+			attuneElement( NaN, 200, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			getLastElement().setAdapter( new HexAdapter );
+			globalX += 205;
+			
+			l = UTIL.comboBoxNumericDataGenerator(1,16);
+			addui( new FSComboBox, CMD.K5_AWIRE_PART_CODE, "", onPartition, s, l );
+			attuneElement( NaN, 60, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			globalX += 85;
+			
+			addui( new FormString, CMD.K5_AWIRE_DELAY, "", null, s, l, "0-9", 3, new RegExp(RegExpCollection.REF_0to254) );
+			getLastElement().setAdapter( new NumericAdapter );
+			attuneElement( 60, NaN, FormString.F_ALIGN_CENTER | FormString.F_EDITABLE );
+			globalX += 85;
+			
+			addui( new FormString, CMD.K5_PART_DELAY, "", null, s, l );
+			getLastElement().setAdapter( new NumericAdapter );
+			attuneElement( 100, NaN, FormString.F_ALIGN_CENTER );
+			globalX += 105;
+			
+			addui( new FormString, CMD.K5_AWIRE_TYPE, "", null, s, l );
+			getLastElement().setAdapter( new TypeAdapter );
+			attuneElement( 100 );
+			
+			width = 900;
+		}
+		public function put(p:Package):void
+		{
+			switch(p.cmd) {
+				case CMD.K5_AWIRE_STATE:
+					fState.setCellInfo(p.getStructure(snum)[0]);
+					break;
+				case CMD.K5_AWIRE_DELAY:
+				case CMD.K5_PART_DELAY:
+					getField(p.cmd, snum ).setCellInfo(p.getStructure()[snum-1]);
+					//var a:Array = OPERATOR.dataModel.getData(CMD.K5_PART_PARAMS)[snum-1];
+					//getField(p.cmd, snum ).disabled = RPartServant.access().is24orFire(snum);	//a[4] > 0 || a[5] > 0;
+					break;
+				case CMD.K5_AWIRE_TYPE:
+					getField(p.cmd, snum ).setCellInfo(p.getStructure()[snum-1]);
+					var bw:BitWatcher = BitWatcher.access(); 
+					bw.putData(p);
+					getField(3,snum).setCellInfo( bw.getValue(snum) );
+				//	getField(p.cmd, snum + UIRWire.TOTAL_WIRE ).setCellInfo(p.getStructure()[snum-1 + UIRWire.TOTAL_WIRE]);
+					break;
+				case CMD.K5_AWIRE_PART_CODE:
+					getField(p.cmd, snum ).setCellInfo(p.getStructure()[snum-1]);
+					getField(p.cmd, snum + UIRWire.TOTAL_WIRE ).setCellInfo(p.getStructure()[snum-1 + UIRWire.TOTAL_WIRE]);
+				//	trace ( (snum-1 + UIRWire.TOTAL_WIRE) +" " +p.getStructure()[snum-1 + UIRWire.TOTAL_WIRE] + " " + snum )
+					onPartition(null);
+			//		getField(CMD.K5_AWIRE_DELAY, snum ).disabled = RPartServant.access().isUtility(p.getStructure()[snum-1]);					
+					break
+			}
+		}
+		/*public function importPair(o:OptRWire):void
+		{
+			pair = o;
+		}*/
+		public function change(p:Package):void
+		{
+		}
+		public function extract():Array
+		{
+			return null;
+		}
+		override public function get height():Number
+		{
+			return 30;
+		}
+		public function isSelected():Boolean
+		{
+			return false;
+		}
+		
+		public function kill():void		{		}
+		public function putRaw(value:Object):void		{		}
+		public function set selectLine(b:Boolean):void		
+		{	// true значит видны только нечетные
+			if (b) {
+				if (snum > 1 && !UTIL.isEven(snum) )
+				fNum.setCellInfo( Math.ceil(snum/2) );
+			} else
+				fNum.setCellInfo( snum );
+			isDry = b;
+		}
+		private function onChange(t:IFormString):void
+		{
+			BitWatcher.access().change( getField(3,snum).getCellInfo() == 1, structureID );
+		}
+		private function set isDry(b:Boolean):void
+		{
+			//var f:IFormString = getField(CMD.K5_AWIRE_PART_CODE,snum);
+			//var l:Array = UTIL.comboBoxNumericDataGenerator(1,16);
+			if (b) {
+				//+K5_PART_PARAMS=1, 0, 0, 0, 0, 1, 1
+				
+				
+			/*	var p:RPartServant = RPartServant.access();
+				var len:int = l.length;
+				for (var i:int=0; i<len; i++) {
+					if( p.isFire( l[i].data ) ) {
+						l.splice(i,1);
+						len--;
+						i--;
+					}
+				}*/
+			}
+	//		(getField(CMD.K5_AWIRE_PART_CODE,snum) as FSComboBox).setList( l );
+		}
+	/*	public function makeFire(p:int=0):void
+		{
+			var f:IFormString = getField(CMD.K5_AWIRE_PART_CODE,snum);
+			f.setCellInfo(p);
+		}*/
+		private function onPartition(t:IFormString):void
+		{
+			var f:IFormString = getField(CMD.K5_AWIRE_PART_CODE,snum);
+			var fevent:IFormString = getField(CMD.K5_AWIRE_PART_CODE,snum+UIRWire.TOTAL_WIRE);
+			var fstate:IFormString = getField(3,snum );
+			var needsave:Boolean = false;
+			if ( RPartServant.access().isFire(f.getCellInfo()) ) {
+				var cid:int = UTIL.isEven(snum) ? 0x110 : 0x118;
+				/*if (t) {
+					pair.makeFire( cid == 1181 ? 1101 : 1181 );
+				}*/
+				var normalstate:int = 0;
+				if (!t && int(fevent.getCellInfo()) != cid)
+					needsave = true;
+				fevent.setCellInfo( cid );
+				//fstate.disabled = true;
+				fevent.disabled = true;
+				if ( int(fstate.getCellInfo()) == 0 )
+					fstate = null;	// обнуляем для того чтобы его лишний р не сохранять
+				else
+					fstate.setCellInfo(0);
+			} else {
+			/*	if (t) {
+					pair.makeFire( cid == 1181 ? 1101 : 1181 );
+				}*/
+				fstate.disabled = false;
+				fevent.disabled = false;
+				fstate = null;
+			}
+			if (!fevent.isValid()) {
+				fevent.setCellInfo( 0 );
+				needsave = true;
+			}
+			if (t || needsave)
+				remember(f);
+		/*	if (fstate)
+				remember(fstate);*/
+		}
+	}
+}
+import components.basement.OptionsBlock;
+import components.gui.fields.FSShadow;
+import components.interfaces.IDataAdapter;
+import components.interfaces.IFormString;
+import components.protocol.Package;
+import components.static.CMD;
+import components.system.UTIL;
+
+class StateAdapter implements IDataAdapter
+{
+	/** "K5_AWIRE_STATE - текущее состояние шлейфов
+	Значение параметра 0 - разомкнут, 1 - замкнут, 2 - авария (к.з. или обрыв)"	*/
+
+	public function adapt(value:Object):Object
+	{
+		switch(int(value)) {
+			case 0:
+				return "разомкнут";
+			case 1:
+				return "замкнут";
+			case 2:
+				return "авария";
+		}
+		return value;
+	}
+	public function change(value:Object):Object
+	{
+		return null;
+	}
+	public function perform(field:IFormString):void	{	}
+	public function recover(value:Object):Object
+	{
+		return null;
+	}
+}
+class TypeAdapter implements IDataAdapter
+{
+	public function adapt(value:Object):Object
+	{
+		switch(int(value)) {
+			case 0:
+				return "Мгновенный";
+			case 1:
+				return "Входной";
+			case 2:
+				return "Проходной";
+		}
+		return value;
+	}
+	public function change(value:Object):Object
+	{
+		return null;
+	}
+	public function perform(field:IFormString):void	{	}
+	public function recover(value:Object):Object
+	{
+		return null;
+	}
+}
+class NumericAdapter implements IDataAdapter
+{
+	public function adapt(value:Object):Object
+	{
+		return UTIL.fz(value,3);
+	}
+	public function change(value:Object):Object
+	{
+		return null;
+	}
+	public function perform(field:IFormString):void	{	}
+	public function recover(value:Object):Object
+	{
+		return value;
+	}
+}
+class BitWatcher extends OptionsBlock
+{
+	private static var inst:BitWatcher;
+	public static function access():BitWatcher
+	{
+		if(!inst)
+			inst = new BitWatcher;
+		return inst;
+	}
+	
+	private var f:IFormString;
+	
+	public function BitWatcher()
+	{
+		super();
+		
+		structureID = 1;
+		f = addui( new FSShadow, CMD.K5_AWIRE_TYPE, "", null, 17 );
+	}
+	override public function putData(p:Package):void
+	{
+		f.setCellInfo(p.getStructure()[16]);
+	}
+	public function change(b:Boolean, num:int):void
+	{
+		var bf:int = int(f.getCellInfo());
+		bf = UTIL.changeBit(bf,num-1,b);
+		f.setCellInfo(bf);
+		remember(f);
+	}
+	public function getValue(s:int):int
+	{
+		var bf:int = int(f.getCellInfo());
+		var b:Boolean = UTIL.isBit(s-1,int(f.getCellInfo()) );
+		var r:int = b ? 1:0;
+		return r;
+	}
+}

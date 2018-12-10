@@ -1,0 +1,62 @@
+package components.screens.ui
+{
+	import components.basement.UI_BaseComponent;
+	import components.protocol.Package;
+	import components.static.CMD;
+	
+	public class UIIVideon extends UI_BaseComponent
+	{
+		private var opts:Vector.<OptIVideon>;
+		private const optsName:Array = [
+			"Адрес электронной почты",
+			"IP-адрес или доменное имя сервера",
+			"Идентификатор пользователя IVideon",
+			"Пароль пользователя IVideon"
+		];
+		
+		public function UIIVideon()
+		{
+			super();
+			
+			opts = new Vector.<OptIVideon>(4);
+			
+			for (var i:int=0; i<4; i++) {
+				opts[i] = new OptIVideon( i+1, optsName[i] );
+				addChild( opts[i] );
+				opts[i].x = globalX;
+				opts[i].y = globalY;
+				globalY += 30;
+			}
+			
+			starterCMD = CMD.VIDEO_IV_SETTINGS;
+		}
+		override public function put(p:Package):void
+		{
+			for (var i:int=0; i<4; i++) {
+				opts[i].putData(p);
+			}
+			loadComplete();
+		}
+	}
+}
+import components.basement.OptionsBlock;
+import components.gui.fields.FSSimple;
+import components.protocol.Package;
+import components.static.CMD;
+
+class OptIVideon extends OptionsBlock
+{
+	public function OptIVideon(s:int, name:String)
+	{
+		super();
+		
+		structureID = s;
+		operatingCMD = CMD.VIDEO_IV_SETTINGS;
+		addui( new FSSimple, operatingCMD, name, null, 1, null, "", 63 );
+		attuneElement( 300, 350 )
+	}
+	override public function putData(p:Package):void
+	{
+		distribute(p.getStructure(structureID), operatingCMD);
+	}
+}

@@ -1,0 +1,670 @@
+package components.screens.ui
+{
+	//	+HISTORY_ENABLE=1,1
+	
+	/** STANDART VOYAGER HISTORY 2.0 	*/
+	
+	import flash.utils.ByteArray;
+	
+	import mx.containers.Canvas;
+	import mx.core.UIComponent;
+	
+	import components.abstract.HistoryDataProvider;
+	import components.abstract.functions.dtrace;
+	import components.abstract.functions.loc;
+	import components.abstract.servants.HistoryExporterKML;
+	import components.abstract.servants.HistorySaverVyagerServant;
+	import components.abstract.servants.HistoryTableServant;
+	import components.abstract.servants.KeyWatcher;
+	import components.abstract.servants.PDFVoyagerServant;
+	import components.abstract.servants.ResizeWatcher;
+	import components.abstract.servants.TXTServant;
+	import components.abstract.servants.TabOperator;
+	import components.abstract.servants.XLSServant;
+	import components.abstract.servants.privitive.ProgressSpy;
+	import components.basement.UI_BaseComponent;
+	import components.events.GUIEventDispatcher;
+	import components.events.GUIEvents;
+	import components.events.SystemEvents;
+	import components.gui.FileBrowser;
+	import components.gui.MHistoryTable;
+	import components.gui.PopUp;
+	import components.gui.PopWindow;
+	import components.gui.fields.FSComboBox;
+	import components.gui.fields.FormString;
+	import components.gui.triggers.TextButton;
+	import components.gui.triggers.VisualButton;
+	import components.gui.visual.HistoryNaviPanel;
+	import components.gui.visual.ScreenBlock;
+	import components.gui.visual.THistoryColumnSelector;
+	import components.interfaces.IResizeDependant;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.statics.CLIENT;
+	import components.protocol.statics.OPERATOR;
+	import components.protocol.statics.SERVER;
+	import components.static.CMD;
+	import components.static.COLOR;
+	import components.static.GuiLib;
+	import components.static.PAGE;
+	import components.system.UTIL;
+	
+	public class UIHistoryTable extends UI_BaseComponent implements IResizeDependant
+	{
+		private const XLS:int = 1;
+		private const PDF:int = 2;
+		private const DELETE:int = 3;
+		private const START:int = 6;
+		private const TXT:int = 7;
+		private const KML:int = 8;
+		
+		private const HASH_PDF_XPOS:Object = {0:5, 1:65, 2:175, 3:255, 4:330, 5:460+70, 6:510+70, 7:595+70, 8:670+70, 9:780+70};
+		
+		private var bExport:TextButton;
+		private var bClearHistory:TextButton;
+		private var bGatherHistory:TextButton;
+		private var tAmount:FormString;
+		
+		private var cbSource:FSComboBox;
+		
+		private var servant:HistorySaverVyagerServant;
+		private var selector:THistoryColumnSelector;
+		
+		private var HIS_SHIFT_Q:uint;
+		private var HIS_SHIFT_Q_BYTE:uint;
+		public var HIS_LAST_INDEX_N1:uint;
+		private var HIS_LAST_PAGE_REQUEST:uint;
+		public var HIS_FIRST_INDEX_N2:Number;
+		private var HIS_BLOCK_SIZE_BYTE:int;
+		private var HIS_TOTAL_BLOCKS:int;
+		private const HIS_CMD_BLOCK_SIZE_BYTE:int=128;
+		private var HIS_REAL_FIRST_BLOCK:Number;
+		private var HIS_SECTOR_SHIFT:int;
+		private var HIS_BLOCK_SHIFT:int;
+		public var HIST_INDEX_IN_FIRST_BLOCK:int; 
+		
+		public var REQUEST_BLOCKS:Array;
+		private var REQUESTED_LAST_INDEX:uint;
+		
+		private var shared:Vector.<String>;	// для создания sharedStrings в xlsx
+		private var shared_color_map:Vector.<String>;
+		private var shared_count:int;		// макс длина строки для sharedStrings в xlsx
+		
+		private var TOTAL_MEMORY_REQUESTED:Boolean = false;
+		private var HIS_BLOCK_SIZE_BYTE_REQUESTED:Boolean = false;
+		private var JUST_OPENED:Boolean = false;;
+		
+		private var ftable:MHistoryTable;
+		private var tservat:HistoryTableServant;
+		private var cont:Canvas;
+		private var bGear:VisualButton;
+		private var npanel:HistoryNaviPanel;
+		private var whitepixel:UIComponent;
+		
+		public function UIHistoryTable()
+		{
+			super();
+			
+			cont = new Canvas;
+			addChild( cont );
+			cont.x = 10;
+			cont.y = 10;
+			
+			tservat = new HistoryTableServant;
+			
+			ftable = new MHistoryTable(tservat.getAdapter());
+			cont.addChild( ftable );
+			ftable.width = 200;
+			ftable.height = 200;
+			ftable.visible = false;
+			
+			whitepixel = new UIComponent;
+			cont.addChild( whitepixel );
+			
+			globalX = PAGE.CONTENT_LEFT_SUBMENU_SHIFT;
+			
+			FLAG_SAVABLE = false; 
+			cbSource = createUIElement( new FSComboBox, 0, loc("his_export_format"), onExportType, 1,
+				UTIL.getComboBoxList( [ [XLS, "XLS"],[PDF,"PDF"]] ) ) as FSComboBox;
+				//UTIL.getComboBoxList( [ [XLS, "XLS"],[PDF,"PDF"],[TXT, "TXT"],[KML, "KML"]] ) ) as FSComboBox;
+			attuneElement(125,100,FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			cbSource.setCellInfo(XLS);
+			cbSource.focusorder = 17;
+			cbSource.focusgroup = TabOperator.GROUP_FIELDS_AFTER_TABLE;
+			cbSource.x = globalX;
+			FLAG_SAVABLE = true;
+			
+			globalX += 245;
+			
+			bGatherHistory = new TextButton;
+			bGatherHistory.setUp( loc("his_read_amount_of_lines"), onButton, START);
+			bGatherHistory.x = globalX;
+			addChild( bGatherHistory );
+			bGatherHistory.focusorder = 20;
+			bGatherHistory.focusgroup = TabOperator.GROUP_FIELDS_AFTER_TABLE;
+			bGatherHistory.visible = false;
+			
+			globalX += 140;
+			
+			FLAG_SAVABLE = false;
+			tAmount = new FormString;
+			tAmount.setWidth(60);
+			tAmount.attune( FormString.F_EDITABLE + FormString.F_OFF_KEYBOARD_REACTIONS );
+			addChild( tAmount );
+			tAmount.x = globalX;
+			tAmount.focusorder = 19;
+			tAmount.focusgroup = TabOperator.GROUP_FIELDS_AFTER_TABLE;
+			tAmount.restrict("0-9",6);
+			
+			globalX += 70;
+			
+			bExport = new TextButton;
+			bExport.setUp( loc("his_do_export"), onExport)
+			bExport.x = bGatherHistory.x;//globalX;
+			addChild( bExport );
+			
+			globalX += 100;
+			
+			bClearHistory = new TextButton;
+			bClearHistory.setUp( loc("his_clear_history"), clear)
+			bClearHistory.x = globalX;
+			addChild( bClearHistory );
+			bClearHistory.width = 137;
+			
+			globalX += 100;
+			
+			servant = new HistorySaverVyagerServant(disableExport);
+			
+			bGear = new VisualButton( GuiLib.cGear );
+			addChild( bGear );
+			bGear.y = 12;
+			bGear.setUp( "", onTogle );
+
+			npanel = new HistoryNaviPanel;
+			addChild( npanel );
+			npanel.x = 10;
+			
+			selector = new THistoryColumnSelector(refresh);
+			addChild( selector );
+			//selector.x = ResizeWatcher.lastWidth - (selector.width + 40);
+			selector.y = 10;
+			
+			/***	Удаление	**********/
+			popup = PopUp.getInstance();
+			
+			REQUEST_BLOCKS = new Array;
+			
+			GUIEventDispatcher.getInstance().addEventListener( GUIEvents.EVOKE_TOGLE, onTogle );
+			
+			this.width = 840;
+			this.height = 300;
+		}
+		override public function open():void
+		{
+			// Требуется обнулить переменные для загрузки
+			JUST_OPENED = true;
+			TOTAL_MEMORY_REQUESTED = false;
+			HIS_BLOCK_SIZE_BYTE_REQUESTED = false;
+			
+			super.open();
+			popup.PARAM_CLOSE_ITSELF = false;
+			ResizeWatcher.addDependent(this);
+			
+			if (!OPERATOR.dataModel.getData(CMD.CONNECT_SERVER))
+				RequestAssembler.getInstance().fireEvent( new Request(CMD.CONNECT_SERVER));
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.HISTORY_INDEX,put));
+			
+			npanel.page_current = 1;
+			KeyWatcher.add(npanel);
+		}
+		override public function close():void
+		{
+			super.close();
+			HIS_BLOCK_SIZE_BYTE = 0;
+			HIS_LAST_PAGE_REQUEST = 0;
+			ResizeWatcher.removeDependent(this);
+			doCancel();
+			servant.halt();
+			selector.close(false);
+			KeyWatcher.remove(npanel);
+		}
+		override public function put(p:Package):void
+		{
+			popup.close();
+			
+			switch(p.cmd) {
+				case CMD.HISTORY_INDEX:
+					HIS_LAST_INDEX_N1 = p.getStructure()[0];
+					HIS_FIRST_INDEX_N2 = p.getStructure()[1];
+					
+					dtrace("HIS_LAST_INDEX_N1="+HIS_LAST_INDEX_N1 );
+					dtrace("HIS_FIRST_INDEX_N2="+HIS_FIRST_INDEX_N2 );
+					
+					load();
+					break;
+				case CMD.HISTORY_SIZE:
+					HistoryDataProvider.TOTAL_MEMORY = p.getStructure()[0];
+					dtrace("TOTAL_MEMORY="+HistoryDataProvider.TOTAL_MEMORY );
+					
+					if ( HistoryDataProvider.TOTAL_MEMORY > 0 )
+						load();
+					else
+						loadComplete();
+					break;
+				case CMD.HISTORY_SELECT_PAR:
+					var arr:Array = HistoryDataProvider.caclHistoryBlockSize(p); 
+					selector.init();
+					servant.register(HistoryDataProvider.HIS_COLLAPSED_PARAMS,HistoryDataProvider.HIS_PERBLOCK_PARAMS);
+					
+					ftable.headers = tservat.generateHeader();
+					ftable.width = tservat.getWidth();
+					
+					HIS_BLOCK_SIZE_BYTE = arr[0];
+					//	HIS_TOTAL_BLOCKS = arr[1];
+					HIS_TOTAL_BLOCKS = HistoryDataProvider.TOTAL_MEMORY/HIS_CMD_BLOCK_SIZE_BYTE;
+					dtrace("HIS_BLOCK_SIZE_BYTE="+HIS_BLOCK_SIZE_BYTE );
+					dtrace("HIS_TOTAL_BLOCKS="+HIS_TOTAL_BLOCKS );
+					//HistoryDataProvider.TOTAL_MEMORY = HIS_TOTAL_BLOCKS*HIS_CMD_BLOCK_SIZE_BYTE;
+					if (HIS_TOTAL_BLOCKS > 0)
+						load();
+					else {
+						dtrace("HistoryDataProvider.TOTAL_MEMORY("+HistoryDataProvider.TOTAL_MEMORY+")/HIS_CMD_BLOCK_SIZE_BYTE("+HIS_CMD_BLOCK_SIZE_BYTE+") меньше 1, страница истории не может загрузиться");
+						
+						loadComplete();
+					}
+					break;
+				case CMD.HISTORY_BLOCK:
+					HIST_INDEX_IN_FIRST_BLOCK = getIndex(p.getStructure());
+					dtrace("HIST_INDEX_IN_FIRST_BLOCK="+HIST_INDEX_IN_FIRST_BLOCK );
+					startCalculation();
+					break;
+			}
+			function load():void
+			{
+				var complete:Boolean = true;
+				
+				if (HistoryDataProvider.TOTAL_MEMORY == 0 ) {
+					if (!TOTAL_MEMORY_REQUESTED) {
+						RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_SIZE, put ) );
+						TOTAL_MEMORY_REQUESTED = true;
+					}
+					complete = false;
+				}
+				if( HIS_BLOCK_SIZE_BYTE == 0 ) {
+					if (!HIS_BLOCK_SIZE_BYTE_REQUESTED) {
+						RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_SELECT_PAR, put ));
+						HIS_BLOCK_SIZE_BYTE_REQUESTED = true;
+					}
+					complete = false;
+				}
+				if (complete)
+					checkHistoryCycles();
+			}
+		}
+		private function refresh():void
+		{
+			GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+				{getScreenMode:ScreenBlock.MODE_LOADING, getScreenMsg:""} );
+			
+			ftable.headers = tservat.generateHeader();
+			
+			RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_INDEX, put));
+			HIS_LAST_PAGE_REQUEST = npanel.page_current;
+		}
+		private function checkHistoryCycles():void
+		{
+			// Если N1 - N2 >= количесва записей всего значит возможно история была записана по кругу
+			if( HIS_LAST_INDEX_N1 - HIS_FIRST_INDEX_N2 + 1 >= Math.floor(HistoryDataProvider.TOTAL_MEMORY/HIS_BLOCK_SIZE_BYTE) )
+				RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_BLOCK, put, 1));
+			else {
+				HIST_INDEX_IN_FIRST_BLOCK = HIS_FIRST_INDEX_N2;
+				startCalculation();
+			}
+		}
+		private function startCalculation():void
+		{
+			var forward_records:int = HIS_LAST_INDEX_N1 - HIST_INDEX_IN_FIRST_BLOCK;
+			var backward_records:int = HIST_INDEX_IN_FIRST_BLOCK - HIS_FIRST_INDEX_N2;
+			var block_with_last_index:int = Math.ceil(forward_records*HIS_BLOCK_SIZE_BYTE/HIS_CMD_BLOCK_SIZE_BYTE);
+			var rest_bytes:int = HistoryDataProvider.TOTAL_MEMORY-Math.floor(HistoryDataProvider.TOTAL_MEMORY/HIS_BLOCK_SIZE_BYTE)*HIS_BLOCK_SIZE_BYTE;
+			var block_with_first_index_bytes:int = HistoryDataProvider.TOTAL_MEMORY - (backward_records*HIS_BLOCK_SIZE_BYTE+rest_bytes);
+			var block_with_first_index:int = Math.ceil(block_with_first_index_bytes/HIS_CMD_BLOCK_SIZE_BYTE);
+			
+			var RECORDS_PER_PAGE:int = CLIENT.HISTORY_LINES_PER_PAGE;
+			
+			var total_history_lines:int = HIS_LAST_INDEX_N1 - HIS_FIRST_INDEX_N2;
+			var total_pages:int = total_history_lines / RECORDS_PER_PAGE;
+			
+			if( HIS_LAST_PAGE_REQUEST == 0 )
+				HIS_LAST_PAGE_REQUEST = 1;
+			
+			REQUEST_BLOCKS.length = 0;
+			var request_from:int = total_history_lines-(HIS_LAST_PAGE_REQUEST-1)*RECORDS_PER_PAGE;
+			
+			if (servant.isReading)
+				RECORDS_PER_PAGE = int(tAmount.getCellInfo());
+			else
+				tAmount.setCellInfo(total_history_lines);
+			
+			servant.total_history_lines = total_history_lines;
+			
+			var rblen:int=0;
+			
+/*			var history_page:int
+			var realblock:int;
+			history_page = int((request_from-i)/0xffff);
+			realblock = request_from-i -(history_page*0xffff);
+	*/		
+			for(var i:int=0; i<RECORDS_PER_PAGE; ++i) {
+				if ( total_history_lines < i || (request_from-i)<0 )
+					break;
+				dtrace( "надо запросить "+ (HIS_FIRST_INDEX_N2+request_from-i) );
+				
+				//getBlock( realblock-i );
+				getBlock( request_from-i );
+				
+				
+				
+				// если запись больше 128 байт, счетчик иногда пропускает один блок истории, эта функция нужна чтобы восполнять пробелы 
+				rblen = REQUEST_BLOCKS.length;
+				if (i > 0 && REQUEST_BLOCKS[rblen-1] != REQUEST_BLOCKS[rblen-2] - 1 )
+					REQUEST_BLOCKS.splice(rblen-1,0,REQUEST_BLOCKS[rblen-1]+1);
+			}
+			
+	//		RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_PAGE, null, 1, [history_page] ));
+			
+			dtrace("Запрос блоков "+REQUEST_BLOCKS.toString());
+			HIS_SHIFT_Q = total_history_lines;
+			
+			var spy:ProgressSpy;
+			if (servant.isReading)
+				spy = servant.getSpy();
+			RequestAssembler.getInstance().fireReadBlock( CMD.HISTORY_BLOCK, assembler, REQUEST_BLOCKS.reverse(), Request.NORMAL, Request.PARAM_DONT_CLEAN,spy);
+		}
+		
+		private function getBlock(n:int):void
+		{
+			if (n<0)
+				dtrace("ВНИМАНИЕ: В UiHistory.getBlock() пришли данные меньше 0!")
+			
+			var unique_index:uint = n+HIS_FIRST_INDEX_N2;
+			var shift:uint = getShift(unique_index);
+			var value:uint;
+			
+			value = Math.ceil((shift*HIS_BLOCK_SIZE_BYTE+HIS_BLOCK_SIZE_BYTE)/HIS_CMD_BLOCK_SIZE_BYTE);
+			
+var history_page:int
+var realblock:int;
+history_page = int(value/0xffff);
+realblock = value -(history_page*0xffff);
+			
+			
+			if( REQUEST_BLOCKS.length == 0 || REQUEST_BLOCKS[ REQUEST_BLOCKS.length - 1 ] != value )
+				REQUEST_BLOCKS.push( value );
+			value = Math.floor(shift*HIS_BLOCK_SIZE_BYTE/HIS_CMD_BLOCK_SIZE_BYTE+1);
+			if( REQUEST_BLOCKS.length == 0 || (REQUEST_BLOCKS[ REQUEST_BLOCKS.length - 1 ] != value && value > 0 )  )
+				REQUEST_BLOCKS.push( value );
+			REQUESTED_LAST_INDEX = unique_index;
+		}
+		private function getShift(index:uint):uint
+		{
+			if (index >= HIST_INDEX_IN_FIRST_BLOCK)
+				return index - HIST_INDEX_IN_FIRST_BLOCK;
+			return (HIS_LAST_INDEX_N1 - HIST_INDEX_IN_FIRST_BLOCK) + (index - HIS_FIRST_INDEX_N2) + 1;
+		}
+		private function getLocalByteShift(index:uint):uint
+		{
+			var shift:uint = getShift(index);
+			var global_byte_shift:int = shift*HIS_BLOCK_SIZE_BYTE;
+			var lastShift:int = getShift(REQUESTED_LAST_INDEX);
+			var local_byte_shift:int = global_byte_shift - ( Math.floor((getShift(REQUESTED_LAST_INDEX)*HIS_BLOCK_SIZE_BYTE)/HIS_CMD_BLOCK_SIZE_BYTE)*HIS_CMD_BLOCK_SIZE_BYTE );
+			if (local_byte_shift < 0)
+				return (HistoryDataProvider.TOTAL_MEMORY + local_byte_shift);
+			return local_byte_shift;
+		}
+		private function assembler(p:Package):void
+		{
+			if (JUST_OPENED) {
+				JUST_OPENED = false;
+				if (HistoryDataProvider.isAtleast1Invisible()) {
+					var popWindow:PopWindow = PopWindow.getInst();
+					popWindow.construct( "his_table_not_shown_fully", 
+						selector.reset );
+					popWindow.open();
+				}
+			}
+			
+			var bytearray:Array = [];
+			var len:uint = p.length;
+			for(var i:int=0; i<len; ++i){
+				bytearray = bytearray.concat( p.data[i] ); 
+			}
+			
+			var lines:Array = new Array;
+			var HISTORY_SHIFT:uint = HIS_FIRST_INDEX_N2 - 1;
+			
+			var total:int = CLIENT.HISTORY_LINES_PER_PAGE;
+			if (servant.isReading)
+				total = int(tAmount.getCellInfo());
+			else
+				lines.length = HIS_SHIFT_Q +1;
+			if (p.length > 0) {
+				for( var k:int=0; k<total; ++k ) {
+					if ( HIS_LAST_INDEX_N1 - (REQUESTED_LAST_INDEX-(total-1)+k) > -1 ) {
+						var sh:int = getLocalByteShift( REQUESTED_LAST_INDEX+k );
+						lines[HIS_LAST_INDEX_N1 - (REQUESTED_LAST_INDEX+k)] = bytearray.slice( sh, sh + HIS_BLOCK_SIZE_BYTE );
+					}
+				}
+			}
+			
+			var assemblege:Package = new Package;
+			assemblege.cmd = CMD.HISTORY_BLOCK;
+			assemblege.data = lines;
+			
+			
+			if (servant.isReading)
+				servant.put(lines);
+			else {
+				
+				var a:Array = assemblege.data.slice((npanel.page_current-1)*CLIENT.HISTORY_LINES_PER_PAGE,npanel.page_current*CLIENT.HISTORY_LINES_PER_PAGE);
+				ftable.put( tservat.getContent( a ));
+				ftable.headers = tservat.getHeader();
+				ftable.width = tservat.getWidth();
+				
+				npanel.update( assemblege.data.length );
+				
+				whitepixel.graphics.clear();
+				whitepixel.graphics.beginFill(COLOR.WHITE);
+				whitepixel.graphics.drawRect(0,0,ftable.width,1);
+				
+				callLater( ftable.resize );
+				callLater( showtable );
+			}
+			
+			GUIEventDispatcher.getInstance().addEventListener( GUIEvents.onNeedPage, getPageListener );
+			
+			//			resize();
+			loadComplete();
+			if( !servant.isReading ) { 
+				GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock );
+				GUIEventDispatcher.getInstance().fireSystemEvent( SystemEvents.onBlockNavigation, {"isBlock":false} );
+			}
+		}
+		private function showtable():void
+		{
+			ftable.visible = true;
+		}
+		private function getPageListener(ev:GUIEvents):void
+		{
+			GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+				{getScreenMode:ScreenBlock.MODE_LOADING, getScreenMsg:""} );
+			RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_INDEX, put));
+			HIS_LAST_PAGE_REQUEST = uint(ev.getData());
+		}
+		private function nextPage():void
+		{
+			var RECORDS_PER_PAGE:int = CLIENT.HISTORY_LINES_PER_PAGE;
+			var total_history_lines:int = HIS_LAST_INDEX_N1 - HIS_FIRST_INDEX_N2;
+			var total_pages:int = total_history_lines / RECORDS_PER_PAGE;
+			
+			if( HIS_LAST_PAGE_REQUEST < total_pages ) {
+				GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+					{getScreenMode:ScreenBlock.MODE_LOADING, getScreenMsg:""} );
+				//	RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_INDEX, put));
+				list.selectPage( HIS_LAST_PAGE_REQUEST+1 );
+				//++;
+			}
+		}
+		private function currentPage():void
+		{
+			GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+				{getScreenMode:ScreenBlock.MODE_LOADING, getScreenMsg:""} );
+			RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_INDEX, put));
+		}
+		private function getIndex(target:Array):uint
+		{
+			var index:uint = 4-1;
+			var arr_index:uint = 0;
+			var value:uint;
+			for(var i:int=0; i<256; ++i ) {
+				if (i==index) {
+					value = target[i+HIS_BLOCK_SHIFT] | target[i+1+HIS_BLOCK_SHIFT] << 8 | target[i+2+HIS_BLOCK_SHIFT] << 16 | target[i+3+HIS_BLOCK_SHIFT] << 24;
+					return value;
+				} else {
+					if( HistoryDataProvider.HIS_COLLAPSED_PARAMS[i] > 0 )
+						arr_index++;
+				}
+			}
+			return 0;
+		}
+		public function localResize(w:int, h:int, real:Boolean=false):void
+		{
+			if ( w-20 < this.width )
+				cont.width = width;
+			else
+				cont.width = w - 20;
+			
+			bGear.x = w - 32;
+			
+			var pos:int = h - 35;
+			cont.height = pos-65;
+			ftable.height = pos-65;
+			
+			npanel.y = pos - 35;
+			
+			bExport.y = pos;
+			cbSource.y = pos;
+			bClearHistory.y = pos;
+			bGatherHistory.y = pos;
+			tAmount.y = pos
+		}
+		private function clear():void
+		{
+			popup.construct( PopUp.wrapHeader("his_do_delete"), PopUp.wrapMessage("his_time_deleting"), PopUp.BUTTON_YES | PopUp.BUTTON_NO, [doDelete,doCancel] );
+			popup.open();
+			bClearHistory.disabled = true;
+		}
+		private function doDelete():void
+		{
+			//new HistoryDeletingBot( CLIENT.TIMER_EVENT_SPAM, VoyagerBot.getHistoryDeleteTimeOut(), deleteComplete, HistoryDeletingBot.HISTORY );
+			RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_DELETE, deleteComplete, 1, [1] ));
+			
+			/*GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+			{getScreenMode:ScreenBlock.MODE_LOADING, getScreenMsg:""} );
+			blockNavi = true;*/
+		}
+		private function doCancel():void
+		{
+			bClearHistory.disabled = false;
+			popup.close();
+		}
+		private function deleteComplete(p:Package):void
+		{
+			bClearHistory.disabled = false;
+			GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedPage, {"getData":1});
+		}
+		private function onTogle(e:GUIEvents=null):void
+		{
+			selector.togle();
+		}
+		private function disableExport(b:Boolean):void
+		{
+			switch(int(cbSource.getCellInfo())) {
+				case XLS:
+				case PDF:
+					bExport.disabled = false;
+					bGatherHistory.disabled = true;
+					tAmount.disabled = true;
+					break;
+				default:
+					bExport.disabled = b;
+					bGatherHistory.disabled = false;
+					tAmount.disabled = false;
+					break;
+			}
+		}
+		private function onExportType():void
+		{
+			disableExport(servant.isExportButtonDisabled());
+		}
+		private function onExport():void
+		{
+			onButton(int(cbSource.getCellInfo()));
+		}
+		private function onButton(num:int):void
+		{
+			var bytes:ByteArray;
+			var book:Object;
+			switch(num) {
+				case XLS:
+				case PDF: 
+				case TXT:  
+				case KML: 
+					//if (servant.isReading) {
+					var res:Array = tservat.getExistingContent();
+					book = new Object;
+					for( var key:String in res) {
+						book[key] = new Object;
+						for( var p:String in res[key]) {
+							book[key][p] = res[key][p];
+						}
+					}
+					//}
+					var h:String;
+					var row:String;
+					var column:String;
+					var date:Date = new Date;
+					var filename:String = "history_export_"+SERVER.VER_FULL+"_"+date.date+"."+int(date.month+1)+"."+date.fullYear;
+					var header:Array = tservat.getHeaderLabels();
+					switch(num) {
+						case XLS:
+							bytes = (new XLSServant).compile(header,book);
+							filename += ".xlsx";
+							break;
+						case PDF:
+							bytes = (new PDFVoyagerServant).compile(header,book);
+							filename += ".pdf";
+							break;
+						case TXT:
+							bytes = (new TXTServant).compile(header,servant.book);
+							filename += ".txt";
+							break;
+						case KML:
+							bytes = (new HistoryExporterKML).compile(header,servant.book);
+							filename += ".kml";
+							break;
+					}
+					FileBrowser.getInstance().save(bytes, filename);
+					break;
+				case START:
+					GUIEventDispatcher.getInstance().fireEvent( GUIEvents, GUIEvents.onNeedScreenBlock,
+						{getScreenMode:ScreenBlock.MODE_LOADING, getScreenMsg:""} );
+					RequestAssembler.getInstance().fireEvent( new Request( CMD.HISTORY_INDEX, put));
+					servant.start();
+					//HIS_LAST_PAGE_REQUEST = uint(ev.getData());
+					break;
+			}
+		}
+	}
+}

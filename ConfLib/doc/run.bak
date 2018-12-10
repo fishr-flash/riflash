@@ -1,0 +1,134 @@
+#!/usr/bin/python
+
+# multythreading flash policy-free tunnel
+# written by Michael Ochnev @ritm 2015
+# v.2.0.8
+
+from socket import *
+import threading
+import httplib
+import os
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+targetdir = "/var/www/html/a-gps.ritm.ru/update/"
+#targetdir = "./update/"
+
+def getFirmwareList(d):
+    try:
+        fl = os.listdir(targetdir + d)
+        fileString = ",".join(fl )
+    except BaseException:
+        fileString = ''
+        print targetdir + d, 'doesn\'t exist'
+    return fileString
+
+def handler(clientsocket, clientaddr):
+    #print "Accepted connection from: ", clientaddr
+    #print "Possible total threads: ", threading.activeCount()
+ 
+    while 1:
+        data = ""
+        try:
+            data = clientsocket.recv(1024)
+        except BaseException:
+            print "exception"
+        if not data:
+            break
+	if data == "":
+            break
+        elif "<policy-file-request/>\0" in data:
+            print data
+            clientsocket.send("""
+                    <?xml version="1.0"?>
+                    <cross-domain-policy>
+                    <allow-access-from domain="*" to-ports="*"/>
+                    </cross-domain-policy>""")
+            clientsocket.close()
+        else:
+            try:
+                r = json.loads(data)
+            except BaseException:
+                print 'JSON parsing error: ', data
+
+            if 'firmwarelist' in r['request']:
+                data = getFirmwareList(r['device'])
+                if len(data) == 0:
+                    data = 'empty'
+                clientsocket.send(data)
+            elif 'firmwarefile' in r['request']:
+                try:
+                    sendfile = open(targetdir+r['device']+"/"+r['file'], 'rb')
+                except BaseException:
+                    print 'error: no such file', r['file']
+
+                if 'sendfile' in locals():
+                    data = sendfile.read()
+                    try:
+                        datalen = str("{0:08d}".format(len(data)))
+                    except BaseException:
+                        datalen = str(len(data)).rjust(8,'0')
+		    try:
+			clientsocket.sendall(datalen)
+		    except BaseException:
+			break
+		    try:
+			clientsocket.sendall(data)
+		    except BaseException:
+			break
+                else:
+		    try:
+			clientsocket.sendall("00000000")
+		    except BaseException:
+			break
+            elif 'decodelbs' in r['request']:
+                # print 'lbs: ', data
+                arr = r['lbs'].split(',')
+                if (len(arr) == 4):
+                    hconn = httplib.HTTPConnection('mobile.maps.yandex.net')
+                    hconn.request("GET", '/cellid_location/?&cellid='+arr[0]+'&operatorid='+arr[1]+'&countrycode='+arr[2]+'&lac='+arr[3])
+                    r1 = hconn.getresponse()
+                    xml = r1.read()
+                try:
+                    hconn.close()
+                except BaseException:
+                    print "could't close http connection"
+                clientsocket.send(xml)                
+            else:
+                print 'Unhandled request', r['request']
+    clientsocket.close()
+    #thread.exit()
+    #print "closing"
+    
+ 
+if __name__ == "__main__":
+ 
+    host = ''
+    port = 55572
+    buf = 1024
+ 
+    addr = (host, port)
+    serversocket = socket(AF_INET, SOCK_STREAM)
+    serversocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    serversocket.bind(addr)
+    serversocket.listen(50)
+
+    while 1:
+       # print "Server is listening for connections\n"
+        try:
+            clientsocket, clientaddr = serversocket.accept()
+        except BaseException:
+            print 'error: too many sockets', threading.activeCount()
+        else:
+            try:
+                t = threading.Thread(target=handler, args=(clientsocket, clientaddr))
+            except BaseException:
+                print 'error create: too many threads', threading.activeCount()
+            else:
+                try:
+                    t.start();
+                except BaseException:
+                    print 'error start: too many threads', threading.activeCount()
+    serversocket.close()

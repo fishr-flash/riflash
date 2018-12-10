@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2"
+	xmlns:atom="http://www.w3.org/2005/Atom">
+	<Document>
+		<open>1</open>
+		<visibility>1</visibility>
+		<name><![CDATA[18.01.2013 21:55]]></name>
+		<atom:author>
+			<atom:name><![CDATA[Создано в приложении Мои треки на Android.]]></atom:name>
+		</atom:author>
+		<Style id="track">
+			<LineStyle>
+				<color>7f0000ff</color>
+				<width>4</width>
+			</LineStyle>
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://earth.google.com/images/kml-icons/track-directional/track-0.png
+					</href>
+				</Icon>
+			</IconStyle>
+		</Style>
+		<Style id="start">
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/paddle/grn-circle.png
+					</href>
+				</Icon>
+				<hotSpot x="32" y="1" xunits="pixels" yunits="pixels" />
+			</IconStyle>
+		</Style>
+		<Style id="end">
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png
+					</href>
+				</Icon>
+				<hotSpot x="32" y="1" xunits="pixels" yunits="pixels" />
+			</IconStyle>
+		</Style>
+		<Style id="statistics">
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png
+					</href>
+				</Icon>
+				<hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+			</IconStyle>
+		</Style>
+		<Style id="waypoint">
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png
+					</href>
+				</Icon>
+				<hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+			</IconStyle>
+		</Style>
+		<Schema id="schema">
+			<gx:SimpleArrayField name="power" type="int">
+				<displayName><![CDATA[Мощность (Вт)]]></displayName>
+			</gx:SimpleArrayField>
+			<gx:SimpleArrayField name="cadence" type="int">
+				<displayName><![CDATA[Частота вращения педалей (об/мин)]]></displayName>
+			</gx:SimpleArrayField>
+			<gx:SimpleArrayField name="heart_rate" type="int">
+				<displayName><![CDATA[Пульс (уд/мин)]]></displayName>
+			</gx:SimpleArrayField>
+		</Schema>
+		<Placemark>
+			<name><![CDATA[18.01.2013 21:55 (А)]]></name>
+			<description><![CDATA[]]>
+			</description>
+			<TimeStamp>
+				<when>2013-01-18T17:52:19.000Z</when>
+			</TimeStamp>
+			<styleUrl>#start</styleUrl>
+			<Point>
+				<coordinates>30.408898,59.84873,28.20001220703125</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="tour">
+			<name><![CDATA[18.01.2013 21:55]]></name>
+			<description><![CDATA[]]>
+			</description>
+			<styleUrl>#track</styleUrl>
+			<gx:MultiTrack>
+				<altitudeMode>absolute</altitudeMode>
+				<gx:interpolate>1</gx:interpolate>
+				<gx:Track>
+					<when>2013-01-18T17:52:19.000Z</when>
+					<gx:coord>30.408898 59.84873 28.20001220703125</gx:coord>
+					<when>2013-01-18T17:52:20.000Z</when>
+					<gx:coord>30.409012 59.84859 10.29998779296875</gx:coord>
+					<when>2013-01-18T17:52:21.000Z</when>
+					<gx:coord>30.408629 59.849184 51.5</gx:coord>
+					<when>2013-01-18T17:52:22.000Z</when>
+					<gx:coord>30.408881 59.84875 33.4000244140625</gx:coord>
+					<when>2013-01-18T18:13:30.000Z</when>
+					<gx:coord>30.401133 59.843708 36.70001220703125</gx:coord>
+					<ExtendedData>
+						<SchemaData schemaUrl="#schema">
+						</SchemaData>
+					</ExtendedData>
+				</gx:Track>
+			</gx:MultiTrack>
+		</Placemark>
+		<Placemark>
+			<name><![CDATA[18.01.2013 21:55 (Б)]]></name>
+			<description>
+				<![CDATA[Создано в приложении Мои треки на Android.
+				Название: 18.01.2013 21:55
+				Вид активности: -
+				Описание: -
+				Общее расстояние: 4,08 км (2,5 мил.)
+				Общее время: 21:21
+				Время движения: 11:55
+				Средняя скорость: 11,46 км/ч (7,1 мил/ч)
+				Средняя скорость при движении: 20,54 км/ч (12,8 мил/ч)
+				Макс. скорость: 50,22 км/ч (31,2 мил/ч)
+				Средний темп: 5:14 мин/км (8:26 мин/мил)
+				Средний темп при движении: 2:55 мин/км (4:42 мин/мил)
+				Максимальный темп: 1:12 мин/км (1:55 мин/мил)
+				Макс. высота: 37 м (121 фт)
+				Мин. высота: 19 м (63 фт)
+				Набор высоты: 31 м (101 фт)
+				Макс. угол наклона: 3%
+				Мин. угол наклона: -4%
+				Записано: 18.01.2013 21:55
+				]]>
+			</description>
+			<TimeStamp>
+				<when>2013-01-18T18:13:30.000Z</when>
+			</TimeStamp>
+			<styleUrl>#end</styleUrl>
+			<Point>
+				<coordinates>30.401133,59.843708,36.70001220703125</coordinates>
+			</Point>
+		</Placemark>
+	</Document>
+</kml>

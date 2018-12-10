@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<foundation:Founder xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:foundation="foundation.*"
+			   xmlns:gui="components.gui.*" 
+			   xmlns:visual="components.gui.visual.*"
+			   minWidth="820" minHeight="360"
+			   preloader="components.gui.visual.ApplicationPreloader">
+	
+	<mx:Canvas id="canvasBase" x="10" y="10" width="100%" height="100%" backgroundColor="#ecf0f6"
+			   borderColor="#cccccc" borderStyle="inset" borderVisible="true" 
+			   horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:Canvas id="canvasMenuHolder" x="0" y="60" width="246" height="580" backgroundColor="#ECF0F6"
+				   horizontalScrollPolicy="off">
+		</mx:Canvas>
+		
+		<mx:Canvas id="canvasSubMenu" x="245" y="-1" width="150" height="100%" backgroundColor="#ffffff"
+				   borderColor="#cccccc" borderStyle="inset" borderVisible="true" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+			<mx:Canvas id="canvasSubMenuHolder" x="0" y="60" width="148" height="580" backgroundColor="#FFFFFF"
+					   horizontalScrollPolicy="off">
+			</mx:Canvas>
+		</mx:Canvas>
+		
+		<mx:Canvas id="canvasMain" x="413" y="59" width="809" height="629" backgroundColor="#FFFFFF"
+				   borderColor="#cccccc" borderStyle="inset" borderVisible="true">
+		</mx:Canvas>
+		<mx:Canvas id="canvasTop" x="413" y="-1" width="809" height="61" backgroundColor="#ffffff"
+				   borderColor="#cccccc" borderStyle="inset" borderVisible="true" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		</mx:Canvas>
+	</mx:Canvas>
+	
+	<!--
+	<fx:Metadata>
+		[SWF(width='1210', height='800')]
+	</fx:Metadata>
+	
+	
+	<fx:Metadata>
+		[SWF(scriptTimeLimit='600000')]
+	</fx:Metadata>
+	-->
+	<fx:Declarations>
+		<fx:XML id="cmdDefault" source="assets/cmd/CommandDefault.xml"/>
+	</fx:Declarations>
+</foundation:Founder>

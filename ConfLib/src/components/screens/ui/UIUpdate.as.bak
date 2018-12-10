@@ -1,0 +1,233 @@
+package components.screens.ui
+{
+	import flash.events.Event;
+	import flash.utils.ByteArray;
+	
+	import mx.controls.ProgressBar;
+	import mx.effects.Resize;
+	import mx.events.ResizeEvent;
+	
+	import spark.effects.Resize;
+	
+	import components.abstract.GroupOperator;
+	import components.abstract.resources.RES;
+	import components.abstract.servants.AutoUpdateNinja;
+	import components.abstract.servants.FirmwareServant;
+	import components.abstract.servants.TaskManager;
+	import components.basement.UI_BaseComponent;
+	import components.events.GUIEventDispatcher;
+	import components.events.GUIEvents;
+	import components.events.SystemEvents;
+	import components.gui.PopUp;
+	import components.gui.SimpleTextField;
+	import components.gui.fields.FSSimple;
+	import components.gui.fields.FormString;
+	import components.gui.triggers.TextButton;
+	import components.gui.visual.Separator;
+	import components.interfaces.IFirmwareEngine;
+	import components.protocol.TunnelOperator;
+	import components.protocol.statics.CLIENT;
+	import components.static.COLOR;
+	import components.static.DEVICES;
+	import components.static.NAVI;
+	import components.static.PAGE;
+	
+	public class UIUpdate extends UI_BaseComponent
+	{
+		public var firmwareInProgress:Boolean = false;
+		
+		protected var go:GroupOperator;
+		protected var bUpload:TextButton;
+		protected var ninja:AutoUpdateNinja;
+		protected var fwservant:IFirmwareEngine;
+		
+		private var patchnotes:SimpleTextField;
+		private var movedownAnchor:int;
+		private var pbar:ProgressBar;
+		private var ninjaAsked:Boolean=false;	// перед входом, если нинзя работает, надо подождать 500 милисекнд, а потом коннектиться в любом случае
+		
+		protected var tunnelOnline:String = "Обновлений для программного обеспечения прибора - нет";
+		private var tunnelOffline:String = "Невозможно подключиться к серверу обновлений";
+		
+		public function UIUpdate()
+		{
+			super();
+			
+			go = new GroupOperator;
+			
+			var sepw:int = 740;
+			
+			FLAG_SAVABLE = false;
+			addui( new FormString, 0, "", null, 1 );
+			attuneElement( 500 );
+			go.add("nofw", getLastElement() );
+			
+			globalY = PAGE.CONTENT_TOP_SHIFT;
+			
+			addui( new FSSimple, 0, "Текущая версия прибора:", null, 2 );
+			attuneElement( 225, 400, FSSimple.F_CELL_NOTEDITABLE_NOTEDITBOX );
+			go.add("fw", getLastElement() );
+			
+			go.add("fw", drawSeparator(sepw) );
+			
+			patchnotes = new SimpleTextField("", 400 );
+			addChild( patchnotes );
+			patchnotes.x = globalX + 300;
+			patchnotes.y = globalY;
+			patchnotes.setSimpleFormat("left");
+			patchnotes.height = 60;
+			//patchnotes.border = true;
+			patchnotes.text = "";
+			go.add("fw", patchnotes );
+			
+			addui( new FSSimple, 0, "Всего обновлений для прибора:", null, 5 );
+			attuneElement( 225, NaN, FSSimple.F_CELL_NOTEDITABLE_NOTEDITBOX | FSSimple.F_CELL_ALIGN_LEFT);
+			go.add("fw", getLastElement() );
+			
+			addui( new FormString, 0, "Доступна версия для обновления:", null, 3 );
+			attuneElement( 300 );
+			go.add("fw", getLastElement() );
+			
+			addui( new FormString, 0, "", null, 4 );
+			(getLastElement() as FormString).setTextColor( COLOR.MENU_ITEM_BLUE );
+			go.add("fw", getLastElement() );
+			
+			movedownAnchor = globalY;
+			
+			var sep:Separator = drawSeparator(sepw); 
+			
+			go.add("fw", sep );
+			go.add("movedown", sep );
+			
+			bUpload = new TextButton;
+			addChild( bUpload );
+			bUpload.x = globalX;
+			bUpload.y = globalY;
+			globalY += 30;
+			bUpload.setUp( "Загрузить в прибор", onUpload );
+			go.add("fw", bUpload );
+			go.add("movedown", bUpload );
+			
+			pbar = new ProgressBar;
+			addChild( pbar );
+			pbar.y = globalY - 40;
+			pbar.x = 200;
+			pbar.width = 300;
+			pbar.height = 40;
+			pbar.label= "";
+			pbar.mode = "manual";
+			pbar.maximum = 100;
+			pbar.minimum = 0;
+			go.add("movedown",pbar);
+			
+			globalY += 30;
+			
+			initServant();
+			
+			setNinja();
+		}
+		override public function open():void
+		{
+	/*		if( ninja.working && !ninjaAsked ) {
+				TaskManager.callLater( open, 500 );
+				ninjaAsked = true;
+				return;
+			}
+			ninjaAsked = false;
+			
+			super.open();
+			
+			if (firmwareInProgress) {
+				loadComplete();
+				GUIEventDispatcher.getInstance().fireSystemEvent( SystemEvents.onBlockNavigation, {"isBlock":true} );
+				pbar.setProgress( 0, 100 );
+				pbar.label= RES.FIRMWARE_TO_DEVICE;
+				return;
+			}
+			
+			if (TunnelOperator.access().online())
+				getField(0,1).setCellInfo(tunnelOnline)
+			else
+				getField(0,1).setCellInfo(tunnelOffline)
+			
+			go.visible("fw", ninja.fwname is String);
+			go.visible("nofw", ninja.fwname == null);
+			
+			if (ninja.fwname is String) {
+				showVersion();
+				getField(0,4).setCellInfo( ninja.fwname );
+				getField(0,5).setCellInfo( ninja.totalpatches );
+			}
+			if (ninja.patchnotes is String) {
+				patchnotes.text = ninja.patchnotes;
+				patchnotes.height = patchnotes.textHeight + 20;
+				if ( (movedownAnchor - patchnotes.y) < patchnotes.height )
+					go.movey("movedown", patchnotes.height + patchnotes.y +20 );
+				else
+					go.movey("movedown", movedownAnchor );
+			} else
+				go.movey("movedown", movedownAnchor );
+			
+			if (ninja.fwname is String)
+				height = bUpload.y + 50;
+			else
+				height = 53;
+			pbar.visible = false;
+			
+			bUpload.disabled = false;
+			
+			//this.dispatchEvent( new Event(ResizeEvent.RESIZE) );*/
+			loadComplete();
+		}
+		protected function setNinja():void
+		{
+			ninja = AutoUpdateNinja.access();
+		}
+		protected function initServant():void
+		{
+			fwservant = new FirmwareServant;
+			fwservant.addEventListener( GUIEvents.EVOKE_BLOCK, onFwStart );
+			fwservant.addEventListener( Event.CHANGE, onFwProgress );
+		}
+		protected function showVersion():void
+		{
+			getField(0,2).setCellInfo( DEVICES.getFullVersion()+" "+DEVICES.getCommit() );
+		}
+		protected function onUpload(b:ByteArray=null):void
+		{
+		/*	bUpload.disabled = true;
+			
+			if ( b ) {
+				fwservant.put( b );
+				fwservant.write();
+			} else {
+				if (ninja.fwname) {
+					var str:String = JSON.stringify( {request:"firmwarefile", device:DEVICES.getName(), file:ninja.fwname } );
+					TunnelOperator.access().request(str, onUpload, {binary:true} );
+				}
+			}*/
+		}
+		protected function onFwStart(e:Event):void
+		{
+			GUIEventDispatcher.getInstance().fireSystemEvent( SystemEvents.onBlockNavigation, {"isBlock":true} );
+			pbar.setProgress( 0, 100 );
+			pbar.visible = true;
+			pbar.label= RES.FIRMWARE_TO_DEVICE;
+			firmwareInProgress = true;
+			CLIENT.AUTOPAGE_WHILE_WRITING = NAVI.UPDATE;
+		}
+		protected function onFwProgress(e:Event):void
+		{
+			if (fwservant.percload == 100) {
+				pbar.label= "Обновление загружено";
+				firmwareInProgress = false;
+				CLIENT.AUTOPAGE_WHILE_WRITING = 0;
+				PopUp.getInstance().composeOfflineMessage(PopUp.wrapHeader(RES.ATTENTION), 
+					PopUp.wrapMessage("После загрузки прошивки прибор обновляется не менее " 
+						+ DEVICES.getDeviceFirmwareTime() + " Не отключайте питание, дождитесь включения прибора." ));
+			} else
+				pbar.label= RES.FIRMWARE_TO_DEVICE+", осталось "+(100-fwservant.percload)+"%";
+			pbar.setProgress( fwservant.percload, 100 );
+		}
+	}
+}

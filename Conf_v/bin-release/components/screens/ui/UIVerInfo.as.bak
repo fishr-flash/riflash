@@ -1,0 +1,213 @@
+package components.screens.ui
+{
+	import components.abstract.functions.loc;
+	import components.abstract.servants.TaskManager;
+	import components.basement.UI_BaseComponent;
+	import components.gui.fields.FSSimple;
+	import components.gui.triggers.TextButton;
+	import components.interfaces.ITask;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.screens.opt.OptVerInfo;
+	import components.screens.opt.OptVerNavInfo;
+	import components.static.CMD;
+	import components.static.COLOR;
+	import components.static.DEVICES;
+	
+	/** Редакция для V4 без стейта 	*/
+	
+	public class UIVerInfo extends UI_BaseComponent
+	{
+		public static var OnlyOneSim:Boolean=false;
+		
+		private var sims:Vector.<OptVerInfo>;
+		private var optNavInfo:OptVerNavInfo;
+		private var coldstart:Boolean=true;
+		private var bDisableTracking:TextButton;
+		private var task:ITask;
+		
+		public function UIVerInfo()
+		{
+			super();
+			
+			var shift:int = 220;
+			
+			sims = new Vector.<OptVerInfo>(2);
+			
+			var clr:uint = COLOR.GREEN_DARK;
+			
+			FLAG_SAVABLE = false;
+			createUIElement( new FSSimple, CMD.VER_INFO, loc("ui_verinfo_device_name"),null,1);
+			attuneElement( shift, 200, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_LEFT );
+			(getLastElement() as FSSimple).setTextColor( clr );
+			createUIElement( new FSSimple, CMD.VER_INFO, loc("ui_verinfo_fw_ver"),null,2);
+			attuneElement( shift, 200, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_LEFT );
+			(getLastElement() as FSSimple).setTextColor( clr );
+			
+			globalY -= 10;
+			drawSeparator(400);
+
+			if (DEVICES.release >= 20) {
+				optNavInfo = addopt( new OptVerNavInfo) as OptVerNavInfo;
+				
+				globalY -= 10;
+				drawSeparator(400);
+			}
+			
+			createUIElement( new FSSimple, CMD.VER_INFO1, loc("ui_verinfo_modem"),null,2);
+			attuneElement( shift, 200, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_LEFT );
+			(getLastElement() as FSSimple).setTextColor( clr );
+			createUIElement( new FSSimple, CMD.VER_INFO1, loc("ui_verinfo_modem_fw_ver"),null,3);
+			attuneElement( shift, 200, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_LEFT );
+			(getLastElement() as FSSimple).setTextColor( clr );
+			createUIElement( new FSSimple, CMD.VER_INFO1, loc("ui_verinfo_imei"),null,4);
+			attuneElement( shift, 170, FSSimple.F_CELL_NOTEDITABLE_NOTEDITBOX | FSSimple.F_CELL_ALIGN_LEFT );
+			(getLastElement() as FSSimple).setTextColor( clr );
+			
+			/**Команда VER_INFO
+			 * Параметр 1 - Название прибора;
+			 * Параметр 2 - Версия прошивки;
+			 * Параметр 3 - Тип памяти;
+			 * 
+			 * Команда VER_INFO1 ( для приборов с двумя симкартами - две структуры )
+			 * Параметр 1 - Тип соединения;
+			 * Параметр 2 - Тип GSM модема;
+			 * Параметр 3 - Версия прошивки модема;
+			 * Параметр 4 - IMEI код;
+			 * Параметр 5 - ID SIM карты;
+			 * Параметр 6 - Сотовый оператор;*/
+			
+			height = 440;
+			width = 430;
+			
+			var a:Array = [CMD.VER_INFO];
+			
+			if ( DEVICES.release >= 20)
+				a = a.concat( [CMD.NAV_INFO] );
+			a = a.concat( [CMD.VER_INFO1] );
+			if ( DEVICES.release >= 24)
+				a = a.concat( [CMD.TRAKING_MODE] );
+			
+			starterCMD = a;
+		}
+		override public function put(p:Package):void
+		{
+			var data:Array;
+			switch (p.cmd) {
+				case CMD.VER_INFO:
+					data = p.getStructure().slice();
+					getField( CMD.VER_INFO,1 ).setCellInfo( DEVICES.name );
+					getField( CMD.VER_INFO,2 ).setCellInfo( data[1] + " "+DEVICES.getCommit());
+					break;
+				case CMD.NAV_INFO:
+					optNavInfo.putData(p);
+					break;
+				case CMD.VER_INFO1:
+					data = p.data.slice();
+/*				
+if (data[0][4]!="") {
+	getField( p.cmd ,2 ).setCellInfo( data[0][1] );
+	getField( p.cmd ,4 ).setCellInfo( data[0][3] );
+} else if (data[1][4]!="") {
+	getField( p.cmd ,2 ).setCellInfo( data[1][1] );
+	getField( p.cmd ,4 ).setCellInfo( data[1][3] );						
+} else {
+	getField( p.cmd ,2 ).setCellInfo( "нет SIM-карты" );
+	getField( p.cmd ,4 ).setCellInfo( "нет SIM-карты" );
+}*/
+					getField( p.cmd ,2 ).setCellInfo( data[0][1] );
+					getField( p.cmd ,3 ).setCellInfo( data[0][2] );
+					getField( p.cmd ,4 ).setCellInfo( data[0][3] );
+
+					var len:int = data.length;
+					OnlyOneSim = Boolean(len == 1);
+					
+					for (var i:int=0; i<len; ++i) {
+						if( !sims[i] ) {
+							sims[i] = new OptVerInfo(i+1);
+							addChild( sims[i] );
+							sims[i].x = globalX;
+							sims[i].y = globalY;
+							globalY += sims[i].complexHeight;
+						}
+						sims[i].putRawData( data[i] );
+					}
+					loadComplete();
+					break;
+				case CMD.TRAKING_MODE:
+					if (coldstart) {
+						coldstart = false;
+						drawSeparator(400);
+						
+						addui( new FSSimple, CMD.TRAKING_MODE, loc("ui_verinfo_watching_mode"), null, 1 );
+						attuneElement( 220, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_LEFT );
+						getLastElement().setAdapter( new TrackingAdapter );
+						
+						bDisableTracking = new TextButton;
+						addChild( bDisableTracking );
+						bDisableTracking.x = globalX + 350;
+						bDisableTracking.y = getLastElement().y;
+						bDisableTracking.setUp( loc("g_switchoff"), onTrackingDisable );
+					}
+					bDisableTracking.visible = Boolean(p.getStructure()[0] == 1);
+					distribute(p.getStructure(), p.cmd);
+					break;
+			}
+		}
+		override public function close():void
+		{
+			super.close();
+			if (task)
+				task.kill();
+			task = null;
+		}
+		private function onTrackingDisable():void
+		{
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.TRAKING_MODE, null, 1, [0]));
+			if (!task)
+				task = TaskManager.callLater( requestTracking, TaskManager.DELAY_1SEC*5 );
+			else
+				task.repeat();
+		}
+		private function requestTracking():void
+		{
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.TRAKING_MODE, put));
+		}
+	}
+}
+import components.abstract.functions.loc;
+import components.gui.fields.FSSimple;
+import components.interfaces.IDataAdapter;
+import components.interfaces.IFormString;
+import components.static.COLOR;
+
+class TrackingAdapter implements IDataAdapter
+{
+	private var color:uint;
+	
+	public function adapt(value:Object):Object
+	{
+		if ( int(value) == 0 ) {
+			color = COLOR.RED;
+			return loc("g_disabled_m");
+		}
+		color = COLOR.GREEN_DARK;
+		return loc("g_enabled_m");
+	}
+	
+	public function change(value:Object):Object
+	{
+		return value;
+	}
+	
+	public function perform(field:IFormString):void
+	{
+		(field as FSSimple).setTextColor( color );
+	}
+	
+	public function recover(value:Object):Object
+	{
+		return null;
+	}
+}

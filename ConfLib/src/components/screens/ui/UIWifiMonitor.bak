@@ -1,0 +1,230 @@
+package components.screens.ui
+{
+	import components.abstract.servants.ResizeWatcher;
+	import components.basement.UI_BaseComponent;
+	import components.gui.Header;
+	import components.gui.MFlexList;
+	import components.interfaces.IResizeDependant;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.static.CMD;
+	
+	public class UIWifiMonitor extends UI_BaseComponent implements IResizeDependant
+	{
+		private var flist:MFlexList;
+		private var widget:WifiWidget;
+		
+		public function UIWifiMonitor()
+		{
+			super();
+			
+			var h:Header = new Header( [{label:"SSID",xpos:10},
+				{label:"MAC", xpos:160},
+				{label:"Безопасность", xpos:360}, 
+				{label:"Уровень\rсигнала", align:"center", xpos:530}],
+				{size:11} );
+			h.y = 20;
+			addChild( h );
+			
+			flist = new MFlexList(OptWifiNet);
+			addChild( flist );
+			flist.width = 670;
+			flist.y = 40;
+			flist.x = 10;
+			
+			widget = new WifiWidget(put);
+		}
+		override public function open():void
+		{
+			super.open();
+			widget.active(true);
+			loadComplete();
+			
+			ResizeWatcher.addDependent(this);
+			
+			RequestAssembler.getInstance().fireEvent(new Request(CMD.ESP_GET_NET_LIST, null, 1, [1]));
+		}
+		override public function close():void
+		{
+			super.close();
+			widget.active(false);
+		}
+		override public function put(p:Package):void
+		{
+			if (p.getValidStructure()[0] == 1)
+				flist.clearlist();
+			flist.add(p,false);
+			ResizeWatcher.doResizeMe(this);
+		}
+		
+		public function localResize(w:int, h:int, real:Boolean=false):void
+		{
+			flist.height = h - 50;
+		}
+	}
+}
+import components.abstract.servants.TaskManager;
+import components.abstract.servants.WidgetMaster;
+import components.basement.OptionListBlock;
+import components.gui.fields.FSShadow;
+import components.gui.fields.FormString;
+import components.interfaces.IDataAdapter;
+import components.interfaces.IFlexListItem;
+import components.interfaces.IFormString;
+import components.interfaces.ITask;
+import components.interfaces.IWidget;
+import components.protocol.Package;
+import components.protocol.Request;
+import components.protocol.RequestAssembler;
+import components.static.CMD;
+import components.static.MISC;
+import components.system.UTIL;
+
+class OptWifiNet extends OptionListBlock implements IFlexListItem
+{
+	public function OptWifiNet(n:int)
+	{
+		/** "Команда ESP_NET_LIST - ответ на ESP_GET_NET_LIST прибором или устройством в Ritm-bin2, после формирования списка.
+			Если видимых сетей больше, чем 8, то присылаем двумя частями с со сквозной порядковой нумерацией ( или большими частями, если маленький буфер передачи )
+			Параметр 1 - номер по порядку.
+			Параметр 2 - Резерв
+			Параметр 3 - МАС адрес WIFI сети;
+			Параметр 4 - Название WIFI сети, полученное из эфира;
+			Параметр 5 - Безопасность, 0-нет, 1-WEP, 2-WPA, 3-WPA2, 4-WAP/WPA2
+			Параметр 6 - Уровень сигнала в дбм,  int8_t,"													*/
+		
+		super();
+		
+		structureID = n;
+		
+		operatingCMD = CMD.ESP_NET_LIST;
+		
+		FLAG_VERTICAL_PLACEMENT = false;
+		addui( new FSShadow, operatingCMD, "", null, 1 );
+		addui( new FSShadow, operatingCMD, "", null, 2 );
+		globalX = 0;
+		addui( new FormString, operatingCMD, "", null, 4 );
+		globalX += 150;
+		addui( new FormString, operatingCMD, "", null, 3 );
+		globalX += 200;
+		addui( new FormString, operatingCMD, "", null, 5 );
+		getLastElement().setAdapter( new SecurityAdapter );
+		//attuneElement(NaN,NaN,FormString.F_ALIGN_CENTER);
+		globalX += 100;
+		addui( new FormString, operatingCMD, "", null, 6 );
+		attuneElement(NaN,NaN,FormString.F_ALIGN_CENTER);
+		getLastElement().setAdapter( new DbmAdapter );
+	}
+	
+	public function change(p:Package):void
+	{
+	}
+	public function extract():Array
+	{
+		return null;
+	}
+	override public function get height():Number
+	{
+		return 22;
+	}
+	public function isSelected():Boolean
+	{
+		return false;
+	}
+	public function kill():void
+	{
+	}
+	public function put(p:Package):void
+	{
+		distribute( p.getValidStructure(), p.cmd );
+	}
+	public function putRaw(value:Object):void
+	{
+	}
+	public function set selectLine(b:Boolean):void
+	{
+	}
+}
+class SecurityAdapter implements IDataAdapter
+{
+	public function adapt(value:Object):Object
+	{
+		// Параметр 5 - Безопасность, 0-нет, 1-WEP, 2-WPA, 3-WPA2, 4-WAP/WPA2
+		switch(int(value)) {
+			case 1:
+				return "WEP";
+			case 2:
+				return "WPA";
+			case 3:
+				return "WPA2";
+			case 4:
+				return "WAP/WPA2";
+		}
+		return "нет";
+	}
+	public function change(value:Object):Object
+	{
+		return null;
+	}
+	public function perform(field:IFormString):void
+	{
+	}
+	public function recover(value:Object):Object
+	{
+		return null;
+	}
+}
+class WifiWidget implements IWidget
+{
+	private var delegate:Function;
+	private var task:ITask;
+	
+	public function WifiWidget(f:Function)
+	{
+		delegate = f;
+	}
+	public function put(p:Package):void
+	{
+		delegate(p);
+	}
+	public function active(b:Boolean):void
+	{
+		if (b) {
+			if (!task)
+				task = TaskManager.callLater(proceed, TaskManager.DELAY_10SEC );
+			else
+				task.repeat();
+			WidgetMaster.access().registerWidget( CMD.ESP_NET_LIST, this );
+			
+			RequestAssembler.getInstance().fireEvent( new Request(CMD.ESP_GET_NET_LIST,null,1,[1]));
+		} else {
+			WidgetMaster.access().unregisterWidget( CMD.ESP_NET_LIST );
+		}
+	}
+	private function proceed():void
+	{
+		RequestAssembler.getInstance().fireEvent( new Request(CMD.ESP_GET_NET_LIST,null,1,[1]));
+		task.repeat();
+	}
+}
+class DbmAdapter implements IDataAdapter
+{
+	public function adapt(value:Object):Object
+	{
+		if (MISC.COPY_DEBUG)
+			return UTIL.toSigned(int(value)) + " дбм (" + int(value) + ")";			
+		return UTIL.toSigned(int(value)) + " дбм";
+	}
+	public function change(value:Object):Object
+	{
+		return null;
+	}
+	public function perform(field:IFormString):void
+	{
+	}
+	public function recover(value:Object):Object
+	{
+		return null;
+	}
+}

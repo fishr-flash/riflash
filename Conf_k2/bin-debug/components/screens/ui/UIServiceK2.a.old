@@ -1,0 +1,28 @@
+package components.screens.ui
+{
+	import components.gui.fields.FSSimple;
+	import components.protocol.Package;
+	import components.static.CMD;
+	import components.system.CONST;
+
+	public class UIServiceK2 extends UIService
+	{
+		public function UIServiceK2()
+		{
+			super();
+			
+			if (CONST.DEBUG) {
+				globalY = 500;
+				createUIElement( new FSSimple, CMD.RF_CALIBR433_FREQ, "RF_CALIBR433_FREQ", null, 1 );
+				attuneElement( 200, 100 );
+				starterCMD = CMD.RF_CALIBR433_FREQ;
+			}
+			height = 200;
+		}
+		override public function put(p:Package):void 
+		{
+			distribute(p.getStructure(),p.cmd);
+			loadComplete();
+		}
+	}
+}

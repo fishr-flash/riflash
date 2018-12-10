@@ -1,0 +1,182 @@
+package components.abstract.servants
+{
+	import com.worlize.websocket.WebSocket;
+	import com.worlize.websocket.WebSocketErrorEvent;
+	import com.worlize.websocket.WebSocketEvent;
+	import com.worlize.websocket.WebSocketMessage;
+	
+	import flash.display.Loader;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.events.ProgressEvent;
+	import flash.events.SecurityErrorEvent;
+	import flash.net.Socket;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.system.Security;
+	import flash.utils.ByteArray;
+	
+	import components.abstract.functions.dtrace;
+	import components.protocol.RequestAssembler;
+	import components.protocol.SocketProcessor;
+	import components.protocol.statics.CLIENT;
+
+	public class Connector
+	{
+		private var adr:String = "192.168.104.208";
+		private var port:int = 80;
+		
+		private var s:Socket;
+		
+		public function Connector()
+		{
+		/*	RequestAssembler.getInstance().HTTPSetUp( "http://"+adr + ":"+port+"/","","");
+			RequestAssembler.getInstance().HTTPErrorListener( onHTTPError );
+			RequestAssembler.getInstance().HTTPRequest( "/device.json", onGetJson );*/
+			
+			Security.loadPolicyFile("http://192.168.104.208/crossdomain.xml");
+
+			dtrace("loader init 2");
+			
+		//	var request:URLRequest = new URLRequest("http://192.168.104.208/device.json");
+			var request:URLRequest = new URLRequest("http://192.168.104.208/contact/contact-14/firmware/K-14.004.003.rtm");
+			var loader:URLLoader = new URLLoader();
+			loader.dataFormat = URLLoaderDataFormat.BINARY;
+			
+			//"contact/contact-14/firmware/K-14.004.003.rtm"
+
+			loader.addEventListener(Event.CONNECT, connectHandler);
+			loader.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+			loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+			loader.addEventListener(Event.COMPLETE, loaderCompleteHandler);
+			loader.load(request);
+			AutoUpdateNinja
+		}
+		
+		private function loaderCompleteHandler(e:Event):void
+		{
+			dtrace("Connector.loaderCompleteHandler(e)");
+			
+			
+		}
+		
+		
+		private function socketstart():void
+		{
+			dtrace("connector init 2");
+			
+			s = new Socket;
+			s.addEventListener(Event.CLOSE, closeHandler);
+			s.addEventListener(Event.CONNECT, connectHandler);
+			s.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+			s.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+			s.addEventListener(ProgressEvent.SOCKET_DATA, socketDataHandler);
+			
+			Security.allowDomain(CLIENT.CONNECT_IP);
+			s.timeout = 3000;
+			try {
+				Security.loadPolicyFile( "xmlsocket://"+adr+":"+port);
+			} catch(error:Error) {
+				dtrace("Error get policy");
+			}
+			
+			try {
+				Security.loadPolicyFile( "http://"+adr+":"+port);
+			} catch(error:Error) {
+				
+			}
+			
+			try {
+				Security.loadPolicyFile( adr+":"+port);
+			} catch(error:Error) {
+				
+			}
+			
+			try {
+				Security.loadPolicyFile( "http://"+adr+"/crossdomain.xml");
+			} catch(error:Error) {
+				
+			}
+			s.connect(adr,port);
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		private function closeHandler(e:Event):void
+		{
+			dtrace( "closeHandler() " );
+		}
+		private function connectHandler(e:Event):void
+		{
+			dtrace( "connectHandler() " );
+		}
+		private function ioErrorHandler(e:Event):void
+		{
+			dtrace( "ioErrorHandler() " );
+		}
+		private function securityErrorHandler(e:SecurityErrorEvent):void
+		{
+			dtrace( "securityErrorHandler() "+ e.text );
+		}
+		private function socketDataHandler(e:Event):void
+		{
+		}
+		
+		
+		protected function onHTTPError(e:Event):void
+		{
+			dtrace("error " + e.type );
+		}
+		protected function onGetJson(b:ByteArray):void
+		{
+			if (b && b.bytesAvailable > 0)
+				dtrace("success");
+		}
+		
+		
+		private var websocket:WebSocket;
+		private function Ws():void
+		{
+			websocket = new WebSocket("wss://localhost:4321/foo?bing=baz", "*", "my-chat-protocol");
+		//	websocket.enableDeflateStream = true;
+			websocket.addEventListener(WebSocketEvent.CLOSED, handleWebSocketClosed);
+			websocket.addEventListener(WebSocketEvent.OPEN, handleWebSocketOpen);
+			websocket.addEventListener(WebSocketEvent.MESSAGE, handleWebSocketMessage);
+			websocket.addEventListener(WebSocketErrorEvent.CONNECTION_FAIL, handleConnectionFail);
+			websocket.connect();
+		}
+		
+		
+		private function handleWebSocketOpen(event:WebSocketEvent):void {
+			trace("Connected");
+			websocket.sendUTF("Hello World!\n");
+			
+			var binaryData:ByteArray = new ByteArray();
+			binaryData.writeUTF("Hello as Binary Message!");
+			websocket.sendBytes(binaryData);
+		}
+		
+		private function handleWebSocketClosed(event:WebSocketEvent):void {
+			trace("Disconnected");
+		}
+		
+		private function handleConnectionFail(event:WebSocketErrorEvent):void {
+			trace("Connection Failure: " + event.text);
+		}
+		
+		private function handleWebSocketMessage(event:WebSocketEvent):void {
+			if (event.message.type === WebSocketMessage.TYPE_UTF8) {
+				trace("Got message: " + event.message.utf8Data);
+			}
+			else if (event.message.type === WebSocketMessage.TYPE_BINARY) {
+				trace("Got binary message of length " + event.message.binaryData.length);
+			}
+		}
+	}
+}

@@ -1,0 +1,451 @@
+package components.screens.opt
+{
+	import components.abstract.adapters.HexAdapter;
+	import components.basement.OptionListBlock;
+	import components.gui.fields.FSCheckBox;
+	import components.gui.fields.FSComboCheckBox;
+	import components.gui.fields.FormString;
+	import components.interfaces.IFlexListItem;
+	import components.interfaces.IFormString;
+	import components.protocol.Package;
+	import components.protocol.statics.OPERATOR;
+	import components.screens.ui.UIRUserCode;
+	import components.static.CMD;
+	import components.system.UTIL;
+	
+	public class OpUserCode extends OptionListBlock implements IFlexListItem
+	{
+		private var COM:int = CMD.K5_KBD_KEY;
+		private var validator:IFormString;
+		
+		public function OpUserCode(s:int)
+		{
+			super();
+			
+			SELECTION_Y_SHIFT = -1;
+			
+			drawSelection(421);
+			
+			structureID = s;
+			globalFocusGroup = 10*structureID;
+			FLAG_VERTICAL_PLACEMENT = false;
+			
+			FLAG_SAVABLE = false;
+			addui( new FormString, 0, String(structureID), null, 1 );
+			attuneElement( 40 ); 
+			FLAG_SAVABLE = true;
+			
+			/** Команда K5_KBD_KEY */
+			/** Параметр 2 - Пароль пользователя ( 0-9999 ). */
+			globalX = 50;
+			createUIElement( new FormString,COM,"",null,1,null,"0-9",4).x = globalX;
+			validator = getLastElement();
+			attuneElement( 60,NaN, FormString.F_ALIGN_CENTER | FormString.F_EDITABLE | FormString.SEND_EVEN_WHEN_DATA_NOT_CHANGED );
+			getLastFocusable().focusorder = 2;
+			getLastElement().setAdapter(new HexAdapter4);
+			UIRUserCode.getValidator().register(validator);
+			
+			/** Параметр 3 - Разделы, к которым относится пароль пользователя ( Битовое поле, указывающее на на строку в PARTITION. 0x0001 - первая строка, 0x0002 - вторая строка, 0x0004 - третья строка..., 0x8000 - 16 строка). Строки разделов выбираются от 1 до 16 по “или” ( битовое представление ); */
+			globalX += 85;
+			createUIElement( new FSComboCheckBoxGroupDisabler,COM,"",null,2).x = globalX;
+			attuneElement( 150 );
+			(getLastElement() as FSComboCheckBoxGroupDisabler).turnToBitfield = turnToPartitionBitfield;
+			getLastFocusable().focusorder = 3;
+			getLastElement().setAdapter( new BitAdapter );
+			/** Параметр 4 - Использовать под принуждением ( 0x00 - нет, 0x01 - да ). */
+			globalX += 210;
+			createUIElement( new FSCheckBox,COM,"",null,3).x = globalX;
+			attuneElement( 0 );
+			getLastFocusable().focusorder = 4;
+			
+			width = 425;
+		}
+	/*	override public function getUniqueData(param:int):String 
+		{
+			return UTIL.createPassword(4,true);
+		}*/
+		
+		override public function get height():Number
+		{
+			return 30;
+		}
+		public function kill():void		
+		{
+			UIRUserCode.getValidator().unregister(validator);
+		}
+		public function change(p:Package):void		{		}
+		public function put(p:Package):void
+		{
+			var info:Array = p.getStructure(structureID);
+			
+			/** Параметр 1 - Пароль пользователя ( 0-9999 ). */
+			getField(COM,1).setCellInfo( UTIL.formateZerosInFront(String(info[0]),4) );
+			/** Параметр 2 - Разделы, к которым относится пароль пользователя ( Битовое поле, указывающее на на строку в PARTITION. 0x0001 - первая строка, 0x0002 - вторая строка, 0x0004 - третья строка..., 0x8000 - 16 строка). Строки разделов выбираются от 1 до 16 по “или” ( битовое представление ); */
+			(getField(COM,2) as FSComboCheckBoxGroupDisabler).setList( getAllPartitionCCBList(info[1]) ); 
+			/** Параметр 3 - Использовать под принуждением ( 0x00 - нет, 0x01 - да ). */
+			getField(COM,3).setCellInfo( String(info[2]) );
+		}
+		public function putRaw(value:Object):void		{		}
+		public function extract():Array		
+		{	
+			return [int(getField(COM,1).getCellInfo()),int(getField(COM,2).getCellInfo()),int(getField(COM,3).getCellInfo())];
+		}
+		private function turnToPartitionBitfield( arr:Array ):int
+		{
+			var num:int = 0;
+			var len:int = arr.length;
+			for (var i:int=0; i<len; i++) {
+				num |= int(arr[i])
+			}
+			return num;
+		}
+		public function set selectLine(b:Boolean):void	
+		{
+			select( b );
+		}
+		public function isSelected():Boolean
+		{
+			return selection.visible;
+		}
+		private function getAllPartitionCCBList(bit:int):Array
+		{	// для приборов, где все разделы есть всегда
+			var list:Array = new Array;
+			list.push( {"label":"Все разделы", "data":0, "trigger": FSComboCheckBox.TRIGGER_SELECT_ALL } );
+			var selected:int;
+			
+			var a:Array = OPERATOR.dataModel.getData(CMD.K5_PART_PARAMS);
+			var wire:Array = OPERATOR.dataModel.getData(CMD.K5_AWIRE_PART_CODE)[0];
+			var uniquep:Array = [];
+			for (var i:int=0; i<16; i++) {
+				if( isUnique(wire[i]) )
+					uniquep.push(wire[i]);
+			}
+			function isUnique(value:int):Boolean
+			{
+				var len:int = uniquep.length;
+				for (var i:int=0; i<len; i++) {
+					if( uniquep[i] == value ) {
+						return false;
+					}
+				}
+				return true;
+			}
+			
+			
+			var g:int;
+			var d:Boolean;
+			for (var j:int=0; j<16; j++) {
+				var _bit:int = bit;
+				selected = 0;
+				for( i=0; i<16; ++i ) {
+					if ( (_bit & int(1<<i)) > 0 && i == j ) {
+						selected = 1;
+						break;
+					}
+				}
+				//var codeX16:String = UTIL.formateZerosInFront( (PARTITION[key].code as int).toString(16), 4).toUpperCase();
+				d = !isAvailable(j);//(a[j] && a[j][4] > 0) ? true : false;
+				/*if (d)
+					g = 3;
+				else
+					g = (a[j] && a[j][5] > 0) ? 1 : 2;*/
+				list.push( {"labeldata":1<<j, 
+					"label":(j+1),
+					"disabled": d,
+					//"group":g,
+					"data":selected, 
+					"block":0 } ); // param = partition (45,65,99 etc)
+			}
+			
+			function isAvailable(value:int):Boolean
+			{
+				var len:int = uniquep.length;
+				for (var i:int=0; i<len; i++) {
+					if (uniquep[i] == value)
+						return true;
+				}
+				return false;
+			}
+			
+			return list;
+		}
+	}
+}
+import flash.events.Event;
+
+import components.abstract.adapters.HexAdapter;
+import components.gui.fields.FSComboCheckBox;
+import components.interfaces.IDataAdapter;
+import components.interfaces.IFormString;
+import components.system.UTIL;
+
+class BitAdapter implements IDataAdapter
+{
+	public function adapt(value:Object):Object
+	{
+		if (value == "Все")
+			return value;
+		var a:Array = (value as String).split(",");
+		var len:int = a.length;
+		var n:int = 0;
+		for (var i:int=0; i<len; i++) {
+			n |= int(a[i]);
+		}
+		var s:String = "";
+		for (i=0; i<16; i++) {
+			if( (n & 1 << i) > 0 ) {
+				if( s.length > 0 )
+					s += ",";
+				s += (i+1);
+			}
+		}
+		return s;
+	}
+	
+	public function change(value:Object):Object
+	{
+		return null;
+	}
+	
+	public function perform(field:IFormString):void
+	{
+		
+	}
+	
+	public function recover(value:Object):Object
+	{
+		return null;
+	}
+}
+class FSComboCheckBoxGroupDisabler extends FSComboCheckBox
+{
+	override protected function selectItem( ev:Event ):void
+	{
+		var obj:Object;
+		
+		if (ev && cell.selectedIndex > -1) {
+			obj = cell.dataProvider.getItemAt( cell.selectedIndex );
+			obj.data = int(!obj.data);
+		}
+		var anythingToBlock:Boolean = false;
+		var str:String="";							// Строка которая собирает реальную информацию о выбранных чекбоксах
+		var len:int = cell.dataProvider.length;
+		var i:int;
+		var tObj:Object;
+		
+		// если обьект имеет действие 
+		if ( obj && obj.trigger is int ) {
+			
+			switch(obj.trigger) {
+				case TRIGGER_SELECT_ALL:		// выбрать все / убрать все
+					for( i=0; i<len; ++i ) {
+						tObj = cell.dataProvider.getItemAt( i ) as Object; 
+						// если итем не триггер 1,2  т.е. его надо обрабатывать
+						if ( tObj.trigger == null && !tObj.disabled )
+							tObj.data = obj.data;
+					}
+					break;
+				case TRIGGER_SELECT_GROUP:		// выбрать / убрать группу
+					for( i=0; i<len; ++i ) {
+						// если итем не триггер и он принадлежит группе триггера
+						tObj = cell.dataProvider.getItemAt( i ) as Object; 
+						if ( !(tObj.trigger is int ) && tObj.group == obj.group )
+							tObj.data = obj.data;
+					}
+					break;
+				case TRIGGER_SELECT_ALL_INVERT:	// выбрать все
+					if(obj.data == 1) {
+						for( i=0; i<len; ++i ) {
+							tObj = cell.dataProvider.getItemAt( i ) as Object; 
+							// если итем не триггер 1,2  т.е. его надо обрабатывать
+							if ( tObj.trigger == null )
+								tObj.data = 0;
+						}
+					}
+					
+					break;
+			}
+		}
+		
+		var gr_total:Object = new Object;
+		var gr_not_whole_selected:Object = new Object;
+		
+		if ( MAX_SELECTED_ITEMS > -1 && !(obj && obj.trigger && obj.trigger == TRIGGER_SELECT_ALL) ) {
+			var total:int = 0;
+			// Перебор всех обьектов комбочекбокса чтобы выяснить не превышает ли число галочек мак значения
+			for( i=0; i<len; ++i ) {
+				tObj = cell.dataProvider.getItemAt( i ) as Object;
+				if ( tObj.trigger == null ) {
+					if ( tObj.data == 1 ) {
+						total++;
+					}
+					// Доходим до максимального значения
+					if (total > MAX_SELECTED_ITEMS) {
+						// Если есть объект значит на галочку ткнули мышкой
+						if (obj)
+							obj.data = 0;
+						
+						total = 0;
+						
+						// После этого надо проверить не было ли выделено еще лишних галочек
+						for (var l:int=0; l<len; ++l) {
+							tObj = cell.dataProvider.getItemAt( l ) as Object;
+							if ( tObj.trigger == null ) {
+								if ( tObj.data == 1 ) {
+									total++;
+								}
+							}
+						}
+						// Если были то надо все обнулить
+						if (total > MAX_SELECTED_ITEMS) {
+							for (l=0; l<len; ++l) {
+								tObj = cell.dataProvider.getItemAt( l ) as Object;
+								if ( tObj.trigger == null ) {
+									tObj.data = 0;
+								}
+							}
+						} else
+							return;
+						break;
+					}
+				}
+			}
+		}
+		var selectedgroup:int;
+		// Перебор всех обьектов комбочекбокса
+		for( i=0; i<len; ++i ) {
+			tObj = cell.dataProvider.getItemAt( i ) as Object;
+			
+			// если объект не триггер
+			if ( !(tObj.trigger is int )) {
+				// если объект принадлежит группе, создаем соответствующий раздел в объекте групп 
+				if( tObj.group is int ) {
+					if (!(gr_total[ tObj.group ] is String))
+						gr_total[ tObj.group ] = "";
+					// если нет, создаем раздел "nogroup"
+				} else {
+					if (!(gr_total[ "nogroup" ] is String))
+						gr_total[ "nogroup" ] = "";
+				}
+				// если объект выбран
+				if ( tObj.data == 1 ) {
+					anythingToBlock = true;
+					// если объект принадлежит группе
+					if( tObj.group is int ) {
+						gr_total[ tObj.group ] += gr_total[ tObj.group ]=="" ?  tObj.labeldata : ","+tObj.labeldata;
+						selectedgroup = tObj.group; 
+					} else
+						gr_total[ "nogroup" ] += gr_total[ "nogroup" ]=="" ?  tObj.labeldata : ","+tObj.labeldata;
+					str += str=="" ?  tObj.labeldata : ","+tObj.labeldata;
+				} else {
+					// если объект не выключен
+					if ( !tObj.disabled ) {
+						// если обьект не выбран, но принадлежит группе создаем соответствующий раздел в объекте "группа которая не выбрана" 
+						if( tObj.group is int )
+							gr_not_whole_selected[ tObj.group ] = 1;
+						else
+							gr_not_whole_selected[ "nogroup" ] = 1;
+					}
+				}
+			} 
+		}
+		line_data = str;
+		
+		str = "";
+		var trAll:Object = getObjByTrigger(TRIGGER_SELECT_ALL);
+		if (trAll)
+			trAll.data = 1;
+		var trAllOneWay:Object = getObjByTrigger(TRIGGER_SELECT_ALL_INVERT);
+		// проверяем объект существующих групп
+		for(var k:String in gr_total) {
+			// если "не выбранные группы" существует добавляем в строку выбранные элементы
+				trace( k );
+		//	if(gr_not_whole_selected[k] is int) {
+				if (gr_total[k] != "")
+					str += str == "" ? gr_total[k] : ","+gr_total[k];
+			/*	if (k != "nogroup")
+					getObjByGroup(k).data = 0;*/
+				if (trAll)
+					trAll.data = 0;
+				if (trAllOneWay && trAllOneWay != obj )
+					trAllOneWay.data = 0;
+				
+				// иначе заменяем элементы на название группы
+//			} else {
+//				if (k != "nogroup") {
+//					str += str == "" ? getObjByGroup(k).label : ","+getObjByGroup(k).label;
+//					getObjByGroup(k).data = 1;
+//				} else
+//					str += str == "" ? gr_total[k] : ","+gr_total[k];
+//			}
+		}
+		for( i=0; i<len; ++i ) {
+			tObj = cell.dataProvider.getItemAt( i ) as Object;
+			if (tObj.group == 3 || tObj.group != selectedgroup && selectedgroup > 0)
+				tObj.disabled = true;
+			else
+				tObj.disabled = false;
+		}
+		
+		// если все объекты оказались выбраны, заменяем лейбл на "выбрано все";
+		if (trAll && trAll.data == 1 && !RETURNS_RAW_LABEL ) {
+			str = LABEL_SELECT_ALL;
+			if( trAll.senddata != null ) {
+				line_data = String(trAll.senddata);  
+			}
+			
+		}
+		// если все объекты оказались выбраны, заменяем лейбл на "выбрано все";
+		if( trAllOneWay && trAllOneWay.data == 1 && !RETURNS_RAW_LABEL ) {
+			str = LABEL_SELECT_ALL;
+			if( trAllOneWay.senddata != null ) {
+				line_data = String(trAllOneWay.senddata);  
+			}
+		}
+		// если выбран режим atleastOneSelected заменяем лейбы на выбрано/не выбрано.
+		if (ATLEAST_ONE_SELECTED) {
+			if (line_data != "")
+				str = atlestOne_selected;
+			else
+				str = atlestOne_none;
+		}
+		
+		if ( obj && obj.block != null ) {
+			if ( anythingToBlock )
+				cell.disable( obj.block );
+			else
+				cell.disable( -1 );
+		} else
+			cell.disable( -1 );
+		
+		if (adapter)
+			cell.text = adapter.adapt(str) as String;
+		else
+			cell.text = str;
+		lastValidInfo = str;
+		
+		if (ev)
+			send();
+		if (obj && obj.param == 0xFFFF )
+			cell.close();
+	}
+	override protected function getObjByGroup(g:Object):Object
+	{
+		var len:int = cell.dataProvider.length;
+		var i:int;
+		var tObj:Object;
+		for( i=0; i<len; ++i ) {
+			tObj = cell.dataProvider.getItemAt( i ) as Object; 
+			if ( tObj.group is int && tObj.group == int(g) )
+				return tObj;
+		}
+		return null;
+	}
+}
+class HexAdapter4 extends HexAdapter
+{
+	override public function adapt(value:Object):Object
+	{
+		return UTIL.fz( super.adapt(value),4);
+	}
+}

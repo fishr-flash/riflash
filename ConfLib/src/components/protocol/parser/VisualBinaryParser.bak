@@ -1,0 +1,164 @@
+package components.protocol.parser
+{
+	import flash.display.Shape;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.events.TextEvent;
+	import flash.filters.DropShadowFilter;
+	import flash.geom.Point;
+	import flash.utils.ByteArray;
+	
+	import mx.controls.TextArea;
+	import mx.core.UIComponent;
+	
+	import components.abstract.ParsingBot;
+	import components.abstract.servants.ResizeWatcher;
+	import components.gui.DevConsole;
+	import components.gui.debug.BinaryParsingScreen;
+	import components.gui.triggers.VisualButton;
+	import components.protocol.models.BinaryModel;
+	import components.static.COLOR;
+	import components.system.UTIL;
+	
+	public class VisualBinaryParser extends UIComponent
+	{
+		private static var inst:VisualBinaryParser;
+		public static function access():VisualBinaryParser
+		{
+			if(!inst)
+				inst = new VisualBinaryParser;
+			return inst;
+		}
+		
+		private var bg:Shape;
+		private var title:Title;
+		private var tLog:TextArea;
+		
+		private var log:String = "";
+		
+		private var bClose:VisualButton;
+		private var bMove:VisualButton;
+		private var parsingScreen:BinaryParsingScreen;
+		
+		public function VisualBinaryParser()
+		{
+			super();
+			
+			bg = new Shape;
+			addChild( bg );
+			
+			title = new Title;
+			addChild( title );
+			title.addEventListener(MouseEvent.MOUSE_DOWN, onMDown );
+			this.addEventListener(MouseEvent.MOUSE_UP, onMUp );
+			
+			tLog = new TextArea;
+			tLog.tabFocusEnabled = false;
+			tLog.tabEnabled = false;
+			tLog.x = 10;
+			tLog.y = 44;
+			tLog.selectable = true;
+			tLog.editable = false;
+			tLog.addEventListener( "htmlTextChanged", onScroll );
+			tLog.addEventListener(TextEvent.LINK, linkHandler);
+			addChild(tLog);
+			
+			draw( 600,400 );
+			
+			visible = false;
+			
+			DevConsole
+		}
+		public function put(b:ByteArray, income:Boolean):void
+		{
+			b.position = 0;
+			var msg:String = UTIL.showByteArray(b);
+			var prefix:String = "";
+			var c:String = COLOR.BLACK.toString(16);
+			log += "<font face='Verdana' size='12' color='#" + c + "'>" + prefix + msg + "</font>\n<end>";
+			tLog.htmlText = log;
+		}
+		public function write(msg:String):void
+		{
+			var c:String = COLOR.RED.toString(16);
+			log += "<font face='Verdana' size='12' color='#" + c + "'>" + msg + "</font>\n<end>";
+			tLog.htmlText = log;
+		}
+		private function onScroll(ev:Event):void
+		{
+			tLog.verticalScrollPosition= tLog.maxVerticalScrollPosition;
+		}
+		private function linkHandler( e:TextEvent):void
+		{
+			showParsedData( ParsingBot.getData( int(e.text) ) );
+		}
+		private function showParsedData(bm:BinaryModel):void
+		{
+			if (!parsingScreen) {
+				parsingScreen = new BinaryParsingScreen;
+				addChild( parsingScreen );
+			}
+			parsingScreen.open(bm);
+			var lw:int = stage.stageWidth;
+			var pg:Point = this.globalToLocal( new Point(lw-parsingScreen.width,20) );
+			parsingScreen.x = pg.x;
+			parsingScreen.y = pg.y;
+		}
+		
+		private function draw(w:int, h:int):void
+		{
+			bg.graphics.clear();
+			bg.graphics.beginFill( COLOR.ANGELIC_GREY );
+			bg.graphics.drawRect(0,0, w, h );
+			bg.filters = [new DropShadowFilter(0,0,COLOR.BLACK,1,2,2,1,1,false)];
+			
+			title.resize(w);
+			
+			tLog.width = w - 20;
+			tLog.height = h - 44;
+			
+			width = w;
+			height = h;
+		}
+		private function onMDown(e:Event):void
+		{
+			this.startDrag();
+		}
+		private function onMUp(e:Event):void
+		{
+			this.stopDrag();
+		}
+	}
+}
+import flash.display.Sprite;
+
+import components.gui.SimpleTextField;
+import components.static.COLOR;
+
+class Title extends Sprite
+{
+	private var tf:SimpleTextField;
+	
+	public function Title()
+	{
+		super();
+		
+		tf = new SimpleTextField("Parser", 100 );
+		addChild( tf );
+		tf.x = 10;
+		tf.y = 5;
+		tf.height = 30;
+	}
+	public function resize(w:int):void
+	{
+		tf.width = w-10;
+		this.graphics.clear();
+		
+		this.graphics.beginFill(0,0);
+		this.graphics.drawRect(0,0,w,30);
+		
+		this.graphics.lineStyle(1,COLOR.SATANIC_INVERT_GREY);
+		this.graphics.moveTo(5,30);
+		this.graphics.lineTo(w-5,30);
+	}
+}

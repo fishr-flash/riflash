@@ -1,0 +1,178 @@
+package components.screens.ui
+{
+	import components.abstract.RegExpCollection;
+	import components.abstract.functions.getAllPartitionCCBList;
+	import components.abstract.functions.loc;
+	import components.abstract.sysservants.PartitionServant;
+	import components.basement.UI_BaseComponent;
+	import components.gui.fields.FSCheckBox;
+	import components.gui.fields.FSComboBox;
+	import components.gui.fields.FSComboCheckBox;
+	import components.gui.fields.FSRadioGroup;
+	import components.gui.fields.FSSimple;
+	import components.gui.fields.FormString;
+	import components.interfaces.IFormString;
+	import components.protocol.Package;
+	import components.static.CMD;
+	import components.static.DEVICES;
+	
+	public class UIReader extends UI_BaseComponent
+	{
+		public function UIReader()
+		{
+			super();
+			globalY = 10;
+			globalX = 10;
+			
+			const firstPadding:int = 560;
+			
+			var list:Array = [{label:loc("g_disabled_m").toLowerCase(), data:0},{label:loc("ui_reader"), data:1},{label:loc("ui_reader_external_control"), data:2}];
+			createUIElement( new FSComboBox, CMD.READER_TM, loc("ui_reader_tm_output"),
+				callLogic, 1,list );
+			attuneElement( firstPadding,150, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			
+			globalY += 10;
+			
+			createUIElement( new FSComboBox, CMD.READER_TM, loc("ui_reader_ind_tm"), 
+				null, 2 );
+			attuneElement( firstPadding + 100, 50, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			
+			globalY += 10;
+			
+			var anchor:int = globalY;
+			
+			
+			if( DEVICES.alias != DEVICES.K5 || DEVICES.release > 9 )
+			{
+				
+				FLAG_SAVABLE = false;
+				
+				createUIElement( new FormString, 0, loc("partition_for_intellect_reader"), null, 1 );
+				attuneElement( firstPadding, NaN, FormString.F_MULTYLINE );
+				globalY = anchor;
+				FLAG_SAVABLE = true;
+				
+				
+				createUIElement( new FSComboCheckBox, CMD.READER_TM, "", null, 8 );
+				attuneElement( 0, 150 );
+				getLastElement().x = firstPadding + 10;
+				(getLastElement() as FSComboCheckBox).turnToBitfield = PartitionServant.turnToPartitionBitfield;
+			}
+			
+
+			drawSeparator( firstPadding + 200 );
+			
+			
+			
+			createUIElement( new FSCheckBox, CMD.READER_TM, loc("ui_reader_allow_guard_with_short_circuit"),
+				null,3);
+			attuneElement( firstPadding, NaN, FSCheckBox.F_MULTYLINE );
+			
+			anchor = globalY;
+			
+			FLAG_SAVABLE = false;
+			createUIElement( new FormString, 0, loc("ui_reader_part_guard_when_circuit"), null, 1 );
+			attuneElement( firstPadding, NaN, FormString.F_MULTYLINE );
+			globalY = anchor;
+			FLAG_SAVABLE = true;
+			createUIElement( new FSComboCheckBox, CMD.READER_TM, "", null, 4 );
+			attuneElement( 0, 150 );
+			getLastElement().x = firstPadding + 10;
+			(getLastElement() as FSComboCheckBox).turnToBitfield = PartitionServant.turnToPartitionBitfield;
+			
+			drawSeparator( firstPadding + 200 );
+
+			var rg:FSRadioGroup = new FSRadioGroup( [ {label:loc("ui_reader_rg1"), selected:false, id:0x01 },
+				 	{label:loc("ui_reader_rg2"), selected:false, id:0x02 },
+				 	{label:loc("ui_reader_rg3"), selected:true, id:0x03 },
+					{label:loc("ui_reader_rg4"), selected:false, id:0x04 }], 1 );
+			rg.y = globalY;
+			rg.x = globalX;
+			rg.width = 496;
+			addChild( rg )
+			globalY += 165;
+			addUIElement( rg, CMD.READER_TM,5,callLogic);
+			
+			createUIElement( new FSSimple, CMD.READER_TM, loc("ui_reader_time_ext_circuit"),
+				null,6, null, "0-9", 5, new RegExp( RegExpCollection.REF_300to10k ));
+			attuneElement( firstPadding + 100, 50, FSSimple.F_MULTYLINE );
+			
+			anchor = globalY;
+			FLAG_SAVABLE = false;
+			createUIElement( new FormString, 0, loc("ui_reader_part_guard_when_ext_control"), null, 2 );
+			attuneElement( firstPadding, NaN, FormString.F_MULTYLINE );
+			globalY = anchor;
+			FLAG_SAVABLE = true
+			createUIElement( new FSComboCheckBox, CMD.READER_TM, "", null, 7 );
+			attuneElement( 0, 150 );
+			getLastElement().x = firstPadding + 10;
+			(getLastElement() as FSComboCheckBox).turnToBitfield = PartitionServant.turnToPartitionBitfield;
+			
+			
+			//createUIElement( new FormString, 0, loc("partition_for_intellect_reader"), null, 2 );
+			
+			starterCMD = [ CMD.K5_AWIRE_PART_CODE, CMD.K5_PART_PARAMS,  CMD.READER_TM ];
+		}
+		override public function put(p:Package):void
+		{
+			if( p.cmd == CMD.READER_TM )
+			{
+				
+				const ind:Array = p.getStructure( structureID );
+				(getField( CMD.READER_TM, 2 ) as FSComboBox).setList( [{label:loc("g_no"), data:0}].concat(PartitionServant.getPartitionList()) );
+				(getField( CMD.READER_TM, 4 ) as FSComboCheckBox).setList( PartitionServant.getPartitionCCBList( p.getStructure()[3] ));
+				//if( DEVICES.alias != DEVICES.K5 || DEVICES.release > 9 ) (getField( CMD.READER_TM, 8 ) as FSComboCheckBox).setList( getAllPartitionCCBList( p.getStructure( )[7] ));
+				if( DEVICES.alias != DEVICES.K5 || DEVICES.release > 9 ) (getField( CMD.READER_TM, 8 ) as FSComboCheckBox).setList( PartitionServant.getPartitionCCBList( p.getStructure()[7] ));
+				(getField( CMD.READER_TM, 7 ) as FSComboCheckBox).setList(  PartitionServant.getPartitionCCBList( p.getStructure()[6] ) );
+				distribute( p.getStructure(), CMD.READER_TM );
+				loadComplete();
+				
+			}
+			
+			
+			
+			
+				
+			//callLogic();
+			
+		}
+		private function callLogic(target:IFormString=null):void
+		{
+			const OFF:int = 0;
+			const INTERNAL:int = 1;
+			const EXTERNAL:int = 2;
+			var management_s:String = getField( CMD.READER_TM, 1 ).getCellInfo().toString();
+			var management:int = int(getField( CMD.READER_TM, 1 ).getCellInfo());
+			
+			var field:IFormString;
+			field = getField( CMD.READER_TM,3);
+			field.disabled = management != INTERNAL;
+			if (management != INTERNAL)
+				field.setCellInfo("0");
+			
+			field = getField( CMD.READER_TM,4);
+			field.disabled = management != INTERNAL;
+			if( management != INTERNAL )
+				(field as FSComboCheckBox).setList(  PartitionServant.getPartitionCCBList( 0 ) );
+			getField( 0, 1 ).disabled = management != INTERNAL;
+				
+			getField( CMD.READER_TM,5).disabled = management != EXTERNAL;
+			var selection:int = int(getField( CMD.READER_TM,5).getCellInfo());
+			
+			var isParam6disabled:Boolean = Boolean( !(selection == 3 || selection == 4) || management != EXTERNAL);
+			var param6:IFormString = getField( CMD.READER_TM,6); 
+			if (isParam6disabled == true && !param6.isValid( param6.getCellInfo().toString() ) )
+				param6.setCellInfo("300");
+			param6.disabled = isParam6disabled;
+			//getField( CMD.READER_TM,6).disabled = isParam6disabled;
+			if (management != EXTERNAL)
+				(getField( CMD.READER_TM, 7) as FSComboCheckBox).setList(  PartitionServant.getPartitionCCBList( 0 ) );
+			getField( CMD.READER_TM, 7 ).disabled = management != EXTERNAL;
+			getField( 0, 2 ).disabled = management != EXTERNAL;
+			
+			
+			if(target)
+				remember( target );
+		}
+	}
+}

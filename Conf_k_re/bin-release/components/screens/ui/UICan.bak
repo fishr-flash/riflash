@@ -1,0 +1,431 @@
+package components.screens.ui
+{
+	import components.abstract.servants.CanServant;
+	import components.abstract.widget.CanWidget;
+	import components.basement.UI_BaseComponent;
+	import components.gui.Header;
+	import components.gui.SimpleTextField;
+	import components.gui.fields.FSBitwise;
+	import components.gui.fields.FSComboBox;
+	import components.gui.fields.FSShadow;
+	import components.gui.fields.FSSimple;
+	import components.interfaces.IFormString;
+	import components.interfaces.ITask;
+	import components.interfaces.IWidget;
+	import components.protocol.Package;
+	import components.protocol.Request;
+	import components.protocol.RequestAssembler;
+	import components.protocol.models.CommandSchemaModel;
+	import components.protocol.statics.OPERATOR;
+	import components.static.CMD;
+	import components.static.COLOR;
+	import components.static.PAGE;
+	import components.system.SavePerformer;
+	import components.system.UTIL;
+	
+	import flash.events.TimerEvent;
+	
+	public class UICan extends UI_BaseComponent
+	{
+		private var cbcars:FSComboBox;
+		private var cbmodels:FSComboBox;
+		private var cbyers:FSComboBox;
+		private var servant:CanServant;
+		private var widget:CanWidget;
+		private var task_engagebin2:ITask;
+		
+		public function UICan()
+		{
+			super();
+			
+			servant = new CanServant;
+			
+			var adapterFF:CanAdapter = new CanAdapter(128);
+			var adapterFFFF:CanAdapter = new CanAdapter(32768);
+			var adapterFFFFFFFF:CanAdapter = new CanAdapter(2147483648);
+			
+			createUIElement( new FSShadow, CMD.CAN_CAR_ID, "", null, 1 );
+			
+			FLAG_SAVABLE = false;
+			cbcars = createUIElement( new FSComboBox, 0, "Марка автомобиля", onCarType, 1, servant.getCarsMenu() ) as FSComboBox;
+			attuneElement( NaN, 200, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			cbmodels = createUIElement( new FSComboBox, 0, "Модель", onCarModel, 2 ) as FSComboBox;
+			attuneElement( NaN, 200, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			cbyers = createUIElement( new FSComboBox, 0, "Год выпуска", onCarYear, 3 ) as FSComboBox;
+			attuneElement( NaN, 200, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			
+			var s:String = "<b>Внимание!</b><br>Неправильный выбор марки, модели и года выпуска<br>" +
+				"автомобиля может привести к появлению ошибок при<br>" +
+				"работе бортового компьютера и двигателя автомобиля.<br>" +
+				"Перед работой с CAN-шиной внимательно изучите<br>" +
+				"рекомандации по настройке и подключению в инструкции."
+			
+			var st:SimpleTextField = new SimpleTextField(s, 550 );
+			addChild( st );
+			st.x = 450;
+			st.y = PAGE.CONTENT_TOP_SHIFT;
+			st.setSimpleFormat("left", 2, 12);
+			st.htmlText = s;
+			st.height = 100;
+			drawSeparator( 1110 );
+			var col1:int=400;
+			var col2:int=800;
+			
+			var header:Header = new Header( [{label:"Периметр",  xpos:PAGE.CONTENT_LEFT_SHIFT, width:300},
+				{label:"Трансмиссия",  xpos:col1, width:300},
+				{label:"Двигатель / Светотехника",  xpos:col2, width:300}
+			],{size:12, posRelative:false, valign:"top"} );
+			addChild( header );
+			header.y = globalY;
+			globalY += 40;
+			
+			var anchor:int = globalY;
+			var doors:Array = [{label:"Закрыта", data:0, color:COLOR.GREEN},{label:"Открыта", data:1, color:COLOR.RED},{label:"н/д", data:2}];
+			var kapot:Array = [{label:"Закрыт", data:0, color:COLOR.GREEN},{label:"Открыт", data:1, color:COLOR.RED},{label:"н/д", data:2}];
+			var alarm:Array = [{label:"Норма", data:0, color:COLOR.GREEN},{label:"Нарушение", data:1, color:COLOR.RED},{label:"н/д", data:2}];
+			var onoff:Array = [{label:"Выкл", data:0, color:COLOR.GREEN},{label:"Вкл", data:1, color:COLOR.RED},{label:"н/д", data:2}];
+			var pBreak:Array = [{label:"Отпущена", data:0, color:COLOR.GREEN},{label:"Нажата", data:1, color:COLOR.RED},{label:"н/д", data:2}];
+			var yesno:Array = [{label:"Нет", data:0, color:COLOR.GREEN},{label:"Да", data:1, color:COLOR.RED},{label:"н/д", data:2}];
+			
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Дверь передняя левая", null, 1, doors );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Дверь передняя правая", null, 2, doors );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Дверь задняя правая", null, 3, doors );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Дверь задняя левая", null, 4, doors );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Капот", null, 5, kapot );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Багажник", null, 6, kapot );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Центральный замок", null, 7, kapot );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Штатная система охраны", null, 8, alarm );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			
+			globalY += 10;
+			var header1:Header = new Header( [{label:"Уровень и расход топлива", xpos:PAGE.CONTENT_LEFT_SHIFT, width:300},
+				{label:"Параметры работы двигателя", xpos:col1, width:300},
+				{label:"Параметры эксплуатации", xpos:col2, width:300}
+			],{size:12, posRelative:false, valign:"top"} );
+			addChild( header1 );
+			header1.y = globalY;
+			globalY += 40;
+			
+			FLAG_SAVABLE = true;
+			
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_FUEL, "Уровень топлива, л", null, 1 );		// 32768
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFF );
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_FUEL, "Уровень топлива, %", null, 2 );		// 128
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFF );
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_FUEL, "Общий расход топлива, л", null, 3 );	// 2147483648
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFFFFFF );
+			
+			FLAG_SAVABLE = false;
+			globalX = col1;
+			globalY = anchor;
+			
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "АКПП в \"D\", движение", null, 9, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "АКПП в \"R\", задний ход", null, 10, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "АКПП в \"N\", нейтраль", null, 11, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "АКПП в \"P\", паркинг", null, 12, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Педаль тормоза", null, 13, pBreak );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Стояночный тормоз", null, 14, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Движение автомобиля", null, 15, yesno );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Рабочий режим", null, 16, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+		
+			FLAG_SAVABLE = false;
+			globalY += 50;
+			FLAG_SAVABLE = true;
+			
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_ENGINE, "Температура охл. жидкости, град", null, 1 );	// 32768
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFF );
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_ENGINE, "Обороты двигателя об./мин.", null, 2 );		// 32768
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFF );
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_ENGINE, "Мгновенный расход, л/ч", null, 3 );			// 32768
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( new FuelAdapter(32768) );
+			
+			FLAG_SAVABLE = false;
+			globalX = col2;
+			globalY = anchor;
+			
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Ключ в замке зажигания", null, 17, yesno );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Аксессуары", null, 18, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Зажигание", null, 19, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Двигатель заведен", null, 20, yesno );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Габаритные огни", null, 21, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Ближний свет", null, 22, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Дальний свет", null, 23, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			createUIElement( new FSBitwise, CMD.CAN_INPUTS, "Ремень безопасности", null, 24, onoff );
+			attuneElement( NaN, NaN, FSBitwise.F_CELL_ALIGN_RIGHT );
+			
+			FLAG_SAVABLE = false;
+			globalY += 50;
+			FLAG_SAVABLE = true;
+			
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_EXPL, "Моточасы, ч", null, 1 );				// 2147483648
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFFFFFF );
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_EXPL, "Общий пробег, км", null, 2 );			// 2147483648
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFFFFFF );
+			createUIElement( new FSSimple, CMD.CAN_PARAMS_EXPL, "Пробег до ТО, км", null, 3 );			// 2147483648
+			attuneElement( NaN, NaN, FSSimple.F_CELL_NOTSELECTABLE | FSSimple.F_CELL_ALIGN_RIGHT );
+			getLastElement().setAdapter( adapterFFFFFFFF );
+			
+			drawSeparator( 1110 );
+
+			globalX = PAGE.CONTENT_LEFT_SHIFT;
+		/*	FLAG_SAVABLE = false;
+			createUIElement( new FSComboBox, 0, "Автообновление данных, сек", onChangeAutoUpdate, 4, UTIL.getComboBoxList([[1,"Постоянно"],5,10]) );
+			attuneElement( NaN, NaN, FSComboBox.F_COMBOBOX_NOTEDITABLE );
+			getLastElement().setCellInfo( 10 );
+		*/	
+			widget = new CanWidget(put);
+			
+			starterCMD = [CMD.CAN_CAR_ID, CMD.CAN_INPUTS, CMD.CAN_PARAMS_FUEL, CMD.CAN_PARAMS_ENGINE, CMD.CAN_PARAMS_EXPL];
+			//starterCMD = [CMD.CAN_CAR_ID, CMD.CAN_PARAMS_EXPL];
+		}
+		override public function put(p:Package):void
+		{
+			switch(p.cmd) {
+				case CMD.CAN_CAR_ID:
+					LOADING = true;
+					var t:int = p.getStructure()[0];
+					var found:Boolean=false;
+					for (var key:String in servant.years) {
+						
+						var a:Array = servant.years[key];
+						var len:int = a.length;
+						for (var i:int=0; i<len; ++i) {
+							if( a[i].data == t ) {
+								var car:String = key.slice(0, key.search(", "));
+								var model:String = key.slice(key.search(", ")+2);
+								var year:String = a[i].label;
+								
+								cbcars.setCellInfo(car);
+								cbmodels.setList( servant.getModelsMenu(car) );
+								cbmodels.setCellInfo(model);
+								cbyers.setList( servant.getYearsMenu(key) );
+								cbyers.setCellInfo( t );
+								
+								found = true;
+								
+								//cbcars.setCellInfo( key
+							}
+							if(found)
+								break;
+						}
+						if(found)
+							break;
+					}
+					break;
+				case CMD.CAN_INPUTS:
+					getField( CMD.CAN_INPUTS, 1).setCellInfo( BitAdapter.getParam( 1, p.getStructure()[0],p.getStructure()[4] ));
+					getField( CMD.CAN_INPUTS, 2).setCellInfo( BitAdapter.getParam( 2, p.getStructure()[0],p.getStructure()[4] ));
+					getField( CMD.CAN_INPUTS, 3).setCellInfo( BitAdapter.getParam( 3, p.getStructure()[0],p.getStructure()[4] ));
+					getField( CMD.CAN_INPUTS, 4).setCellInfo( BitAdapter.getParam( 4, p.getStructure()[0],p.getStructure()[4] ));
+					
+					getField( CMD.CAN_INPUTS, 5).setCellInfo( BitAdapter.getParam( 5, p.getStructure()[0],p.getStructure()[4] ));
+					getField( CMD.CAN_INPUTS, 6).setCellInfo( BitAdapter.getParam( 6, p.getStructure()[0],p.getStructure()[4] ));
+					getField( CMD.CAN_INPUTS, 7).setCellInfo( BitAdapter.getParam( 7, p.getStructure()[0],p.getStructure()[4] ));
+					getField( CMD.CAN_INPUTS, 8).setCellInfo( BitAdapter.getParam( 8, p.getStructure()[0],p.getStructure()[4] ));
+					
+					getField( CMD.CAN_INPUTS, 9).setCellInfo( BitAdapter.getParam( 1, p.getStructure()[1],p.getStructure()[5] ));
+					getField( CMD.CAN_INPUTS, 10).setCellInfo( BitAdapter.getParam( 2, p.getStructure()[1],p.getStructure()[5] ));
+					getField( CMD.CAN_INPUTS, 11).setCellInfo( BitAdapter.getParam( 3, p.getStructure()[1],p.getStructure()[5] ));
+					getField( CMD.CAN_INPUTS, 12).setCellInfo( BitAdapter.getParam( 4, p.getStructure()[1],p.getStructure()[5] ));
+					
+					getField( CMD.CAN_INPUTS, 13).setCellInfo( BitAdapter.getParam( 5, p.getStructure()[1],p.getStructure()[5] ));
+					getField( CMD.CAN_INPUTS, 14).setCellInfo( BitAdapter.getParam( 6, p.getStructure()[1],p.getStructure()[5] ));
+					getField( CMD.CAN_INPUTS, 15).setCellInfo( BitAdapter.getParam( 7, p.getStructure()[1],p.getStructure()[5] ));
+					getField( CMD.CAN_INPUTS, 16).setCellInfo( BitAdapter.getParam( 8, p.getStructure()[1],p.getStructure()[5] ));
+					
+					getField( CMD.CAN_INPUTS, 17).setCellInfo( BitAdapter.getParam( 1, p.getStructure()[2],p.getStructure()[6] ));
+					getField( CMD.CAN_INPUTS, 18).setCellInfo( BitAdapter.getParam( 2, p.getStructure()[2],p.getStructure()[6] ));
+					getField( CMD.CAN_INPUTS, 19).setCellInfo( BitAdapter.getParam( 3, p.getStructure()[2],p.getStructure()[6] ));
+					getField( CMD.CAN_INPUTS, 20).setCellInfo( BitAdapter.getParam( 4, p.getStructure()[2],p.getStructure()[6] ));
+					
+					getField( CMD.CAN_INPUTS, 21).setCellInfo( BitAdapter.getParam( 5, p.getStructure()[2],p.getStructure()[6] ));
+					getField( CMD.CAN_INPUTS, 22).setCellInfo( BitAdapter.getParam( 6, p.getStructure()[2],p.getStructure()[6] ));
+					getField( CMD.CAN_INPUTS, 23).setCellInfo( BitAdapter.getParam( 7, p.getStructure()[2],p.getStructure()[6] ));
+					getField( CMD.CAN_INPUTS, 24).setCellInfo( BitAdapter.getParam( 8, p.getStructure()[2],p.getStructure()[6] ));
+					break;
+				case CMD.CAN_PARAMS_EXPL:
+					if (LOADING) {
+						widget.active(true);
+						loadComplete();
+				//		onChangeAutoUpdate();
+						LOADING = false;
+					}
+				case CMD.CAN_PARAMS_FUEL:
+					distribute( p.getStructure(), p.cmd );
+					break;
+				case CMD.CAN_PARAMS_ENGINE:
+					var csm:CommandSchemaModel = OPERATOR.getSchema(CMD.CAN_PARAMS_ENGINE);
+					distribute( p.getStructure(), p.cmd );
+					break;
+				//case CMD.CAN_GET_PARAMS
+			}
+		}
+		override public function close():void
+		{
+			super.close();
+			widget.active(false);
+		}
+		private function onCarType():void
+		{
+			var info:String = cbcars.getCellInfo().toString();
+			var menu:Array = servant.getModelsMenu( cbcars.getCellInfo().toString() );
+			cbmodels.setList( menu );
+			for (var key:String in menu ) {
+				cbmodels.setCellInfo( menu[key].data );
+				onCarModel();
+				break;
+			}
+		}
+		private function onCarModel():void
+		{
+			var info:String = cbcars.getCellInfo().toString();
+			var info2:String = cbmodels.getCellInfo().toString();
+			var menu:Array = servant.getYearsMenu( cbcars.getCellInfo() + ", "+ cbmodels.getCellInfo().toString() );
+			cbyers.setList( menu );
+			for (var key:String in menu ) {
+				cbyers.setCellInfo( menu[key].data );
+				onCarYear();
+				break;
+			}
+		}
+		private function onCarYear():void
+		{
+			var f:IFormString = getField(CMD.CAN_CAR_ID,1);
+			f.setCellInfo( cbyers.getCellInfo() );
+			SavePerformer.remember( 1, f);
+		}
+	/*	private function onChangeAutoUpdate():void
+		{
+			initSpamTimer( CMD.CAN_CAR_ID, 1, true, null, int(getField(0,4).getCellInfo()+"000"));
+		}*/
+	/*	override protected function timerComplete( ev:TimerEvent ):void 
+		{
+			if (this.visible) {
+				RequestAssembler.getInstance().fireEvent( new Request( CMD.CAN_INPUTS, put ));
+				RequestAssembler.getInstance().fireEvent( new Request( CMD.CAN_PARAMS_FUEL, put ));
+				RequestAssembler.getInstance().fireEvent( new Request( CMD.CAN_PARAMS_ENGINE, put ));
+				RequestAssembler.getInstance().fireEvent( new Request( CMD.CAN_PARAMS_EXPL, put ));
+				
+				stateRequestTimer.reset();
+				stateRequestTimer.start();
+			}
+		}*/
+	}
+}
+import components.gui.fields.FSSimple;
+import components.interfaces.IDataAdapter;
+import components.interfaces.IFormString;
+import components.static.COLOR;
+
+class BitAdapter 
+{
+	//	параметр для CAN_INPUTS, параметр - 2 бита
+	public static function getParam(param:int, data:int, isactive:int):int
+	{
+		var p:int = param-1; 
+		if ( (1<<p) & isactive ) {
+			if( (1<<p) & data )
+				return 1;
+			return 0;
+		}
+		return 2;
+		
+	/*	var p1:int = param*2-2;
+		var p2:int = param*2-1; 
+		if ( (1<<p2) & data ) {
+			if( (1<<p1) & data )
+				return 1;
+			return 0;
+		}
+		return 2;*/
+	}
+}
+// адаптер меняет цвет и данные
+class CanAdapter implements IDataAdapter 
+{
+	private var target:uint;
+	private var color:int;
+	public function CanAdapter(value:int)
+	{
+		target = value;
+	}
+	public function adapt(value:Object):Object
+	{
+		if ( uint(value) == target ) {
+			color = COLOR.BLACK;
+			return "н/д"
+		}
+		color = COLOR.GREEN;
+		return value;
+	}
+	public function perform(field:IFormString):void
+	{
+		(field as FSSimple).setTextColor( color );
+	}
+	public function recover(value:Object):Object
+	{
+		return value;
+	}
+	public function change(value:Object):Object 	{ return value	}
+}
+// адаптер делит на 10 значение мгновенного расхода топлива
+class FuelAdapter implements IDataAdapter 
+{
+	private var target:uint;
+	private var color:int;
+	public function FuelAdapter(value:int)
+	{
+		target = value;
+	}
+	public function adapt(value:Object):Object
+	{
+		if ( uint(value) == target ) {
+			color = COLOR.BLACK;
+			return "н/д"
+		}
+		color = COLOR.GREEN;
+		return int(value)/10;
+	}
+	public function perform(field:IFormString):void
+	{
+		(field as FSSimple).setTextColor( color );
+	}
+	public function recover(value:Object):Object
+	{
+		return value;
+	}
+	public function change(value:Object):Object 	{ return value	}
+}

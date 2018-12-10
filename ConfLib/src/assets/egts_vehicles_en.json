@@ -1,0 +1,35 @@
+{
+	"vehicles":
+	[
+		"Not selected"
+		,"Passenger ( Class M1 )"
+		,"Bus ( Class M2 )"
+		,"Bus ( Class M3 )" 
+		,"Light truck ( Class N1 )" 
+		,"Heavy truck ( Class N2 )" 
+		,"Heavy truck ( Class N3 )" 
+		,"Motorcycle ( Class L1e )" 
+		,"Motorcycle ( Class L2e )" 
+		,"Motorcycle ( Class L3e )" 
+		,"Motorcycle ( Class L4e )" 
+		,"Motorcycle ( Class L5e )" 
+		,"Motorcycle ( Class L6e )" 
+		,"Motorcycle ( Class L7e )" 
+	]
+	, "powers":
+	[	
+		"Not selected"
+		,"Gasoline"
+		,"Diesel"
+		,"Condensed natural gas (CNG)"
+		,"Liquid propane (LPG)"
+		,"Electricity ( more than 42V and 100A/h )"
+		,"Hydrogen"
+		
+		
+		
+		
+		
+	]
+	
+}

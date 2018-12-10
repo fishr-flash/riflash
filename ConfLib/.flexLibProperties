@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="components.abstract.servants.primitive.StartupUtility"/>
+    <classEntry path="components.gui.PopMenu"/>
+    <classEntry path="components.gui.fields.FSButton"/>
+    <classEntry path="components.abstract.servants.adapter.BooleanColorAdapter"/>
+    <classEntry path="components.screens.ui.UIVersion"/>
+    <classEntry path="components.abstract.sysservants.StructureManager"/>
+    <classEntry path="components.interfaces.IBaseComponent"/>
+    <classEntry path="components.screens.page.VersionRitmLink"/>
+    <classEntry path="components.abstract.WeakTimer"/>
+    <classEntry path="components.screens.ui.UILockFromWriters"/>
+    <classEntry path="components.screens.ui.UITemperatureSensor"/>
+    <classEntry path="components.screens.ui.VectorScreen"/>
+    <classEntry path="components.screens.opt.rf_modules.OptModule"/>
+    <classEntry path="components.screens.opt.rf_modules.OptModulePart"/>
+    <classEntry path="components.gui.visual.deviceMap.Sensor_root_module"/>
+    <classEntry path="components.gui.triggers.CMButton"/>
+    <classEntry path="components.gui.triggers.ClrMButton"/>
+    <classEntry path="components.screens.ui.UIScreenKeyboard"/>
+    <classEntry path="components.gui.fields.FSSimpleConnectServerEGTS"/>
+    <classEntry path="components.screens.page.FirmWareAdvLoader_specialForV2n055"/>
+    <classEntry path="components.screens.ui.UIEgtsParams"/>
+    <classEntry path="components.screens.ui.UIEgtsStats"/>
+    <classEntry path="components.screens.ui.UIDevicePower"/>
+    <classEntry path="components.abstract.servants.LcdIsoServant"/>
+    <classEntry path="components.abstract.servants.primitive.LSDIsoData"/>
+    <classEntry path="components.abstract.TextSnapshoter"/>
+    <classEntry path="components.abstract.servants.BitmapfontUploadServant"/>
+    <classEntry path="components.abstract.WriterIsoLCD3Bot"/>
+    <classEntry path="components.abstract.IconLoader"/>
+    <classEntry path="components.abstract.BMPDecoder"/>
+    <classEntry path="components.abstract.servants.EgtsVehiclesServant"/>
+    <classEntry path="components.abstract.HoldConnectBot"/>
+    <classEntry path="components.screens.ui.UIDevicePowerK14"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>

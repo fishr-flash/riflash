@@ -1,0 +1,87 @@
+{
+	"devices":
+	{
+		"default":
+		{
+			"apps":
+			{
+				"1":
+				{
+					"releases":
+					{
+						"1":
+						{
+							"groups":
+							[
+								
+								[
+									{"id":"0", "label":"No" },
+									{"id":"1", "label":"Movimento è iniziato" },
+									{"id":"2", "label":"Motore accesso" },
+									{"id":"33", "label":"Accensione on" },
+									{"id":"3", "label":"Alim. principale è spenta" },
+									{"id":"4", "label":"La tensione bassa" },
+									{"id":"5", "label":"Urtata (Avaria)" },
+									{"id":"6", "label":"Inclinazione" },
+									{"id":"7", "label":"L’allarme, Entrata1" },
+									{"id":"8", "label":"L’allarme, Entrata2" },
+									{"id":"9", "label":"L’allarme, Entrata3" },
+									{"id":"10", "label":"L’allarme, Entrata4" }
+								],
+								
+								
+								[
+									{"id":"11", "label":"Cont. reed sull’avulsione" },
+									{"id":"12", "label":"Cont. reed sul campo est." },
+									{"id":"13", "label":"Contatto reed esterno" }
+								],
+								
+								
+								[
+									{"id":"14", "label":"Il pulsante 1" },
+									{"id":"15", "label":"Il pulsante 2" },
+									{"id":"16", "label":"Il pulsante 3 (Alarm)" }
+									
+								],
+								
+								
+								
+								[
+									{"id":"17", "label":"Codice Mast. non inserito" },
+									{"id":"18", "label":"Att. la modalità di monit" },
+									{"id":"19", "label":"La porta del conducente" },
+									{"id":"20", "label":"Le porte" },
+									{"id":"21", "label":"Cofano" },
+									{"id":"22", "label":"Bagaglio" },
+									{"id":"23", "label":"Perimetro" },
+									{"id":"24", "label":"Protezione" },
+									{"id":"25", "label":"Tolto da sotto la protez." },
+									{"id":"26", "label":"Identificazione" },
+									{"id":"27", "label":"Non c'è identificazione" },
+									{"id":"28", "label":"Modalità di servizio" },
+									{"id":"29", "label":"Il cambio aut. non è Park" },
+									{"id":"30", "label":"Pedale del freno" },
+									{"id":"31", "label":"Freno a mano" },
+									{"id":"32", "label":"L'allarme quando la prot." },
+									{"id":"34", "label":"La batteria è carica" },
+									{"id":"35", "label":"Cessazione di movimento" },
+									{"id":"36", "label":"Motore TC Fermato" },
+									{"id":"37", "label":"The level of high temp." },
+									{"id":"38", "label":"The level of low temp." }
+									
+									
+								]
+								
+								
+							]
+							
+						}
+					}
+				}
+				
+				
+			}
+		}
+	}
+	
+}
