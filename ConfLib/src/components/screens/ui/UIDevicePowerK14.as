@@ -6,7 +6,6 @@ package components.screens.ui
 	import components.abstract.Dragable3Limits;
 	import components.abstract.functions.loc;
 	import components.abstract.servants.TaskManager;
-	import components.abstract.servants.adapter.VoltageAdapter;
 	import components.basement.UI_BaseComponent;
 	import components.gui.fields.FSShadow;
 	import components.gui.fields.FSSimple;
@@ -29,8 +28,6 @@ package components.screens.ui
 		private var dlimitsGuided:Dragable3Limits;
 		private var task:ITask;
 		private var p:Point;
-		private var adapter:InputVoltageAdapter;
-		
 		
 
 		private var _chart:ChartOfIndications;
@@ -61,32 +58,28 @@ package components.screens.ui
 			
 			addui( new FSSimple, CMD.BATTERY_LEVEL, loc("power_instant_u"), null, 2 );
 			attuneElement( shift, 60, FSSimple.F_CELL_NOTEDITABLE_NOTEDITBOX | FSSimple.F_CELL_ALIGN_CENTER );
-			//getLastElement().setAdapter( new VoltageAdapter );
+			
 			
 			addui( new FSShadow, CMD.VOLTAGE_LIMITS, "", null, 1 );
-			adapter = new InputVoltageAdapter;
-			//getLastElement().setAdapter( adapter );
+			
 			
 			
 			addui( new FSShadow, CMD.VOLTAGE_LIMITS, "", null, 2 );
-			adapter = new InputVoltageAdapter;
-			//getLastElement().setAdapter( adapter );
+			
 			
 			
 			addui( new FSSimple, CMD.VOLTAGE_LIMITS, loc("voltage_for_recov_acu"), doChangeVoltage, 5 );
-			adapter = new InputVoltageAdapter;
-			//getLastElement().setAdapter( adapter );
-			attuneElement( shift, 60, FSSimple.F_CELL_ALIGN_CENTER  );
+			attuneElement( shift, 60, FSSimple.F_CELL_ALIGN_CENTER |FSSimple.F_CELL_NOTEDITABLE_EDITBOX  );
+			FSSimple( getLastElement() ).fcellBorderColor = COLOR.VIOLET;
 			
 			addui( new FSSimple, CMD.VOLTAGE_LIMITS, loc("power_on_when_voltage_reach"), doChangeVoltage, 4 );
-			adapter = new InputVoltageAdapter;
-			//getLastElement().setAdapter( adapter );
-			attuneElement( shift, 60, FSSimple.F_CELL_ALIGN_CENTER  );
+			attuneElement( shift, 60, FSSimple.F_CELL_ALIGN_CENTER |FSSimple.F_CELL_NOTEDITABLE_EDITBOX );
+			FSSimple( getLastElement() ).fcellBorderColor = COLOR.GREEN;
+			
 			
 			addui( new FSSimple, CMD.VOLTAGE_LIMITS, loc("voltage_for_fail_acu"), doChangeVoltage, 3 );
-			adapter = new InputVoltageAdapter;
-			//getLastElement().setAdapter( adapter );
-			attuneElement( shift, 60, FSSimple.F_CELL_ALIGN_CENTER  );
+			attuneElement( shift, 60, FSSimple.F_CELL_ALIGN_CENTER |FSSimple.F_CELL_NOTEDITABLE_EDITBOX );
+			FSSimple( getLastElement() ).fcellBorderColor = 0xba7000;
 			
 			
 			
@@ -108,7 +101,7 @@ package components.screens.ui
 					getField( p.cmd, 2 ).setCellInfo( rel.toFixed( 2 ) );
 					
 					
-					if( _chart )_chart.setBar( "BL2", rel, rel.toFixed( 2 ) + loc( "measure_volt_1l" ) );
+					if( _chart && _chart.lastBarY != rel )_chart.setBar( "BL2", rel, rel.toFixed( 2 ) + loc( "measure_volt_1l" ) );
 					if (!task)
 						task = TaskManager.callLater( onRequestVoltage, TaskManager.DELAY_5SEC );
 					else
@@ -129,6 +122,10 @@ package components.screens.ui
 					
 					
 					createChart( p );
+					
+					_chart.setBar( "BL2"
+									, Number( getField( CMD.BATTERY_LEVEL, 2 ).getCellInfo() )
+									,  getField( CMD.BATTERY_LEVEL, 2 ).getCellInfo() + loc( "measure_volt_1l" ) );
 					loadComplete();
 					
 					
@@ -164,31 +161,6 @@ package components.screens.ui
 				
 				const len:int =value.array.length;
 				for (var i:int=0; i<len; i++) {
-					////////////////////TRACE//////////////////////////////
-					///TODO: trace
-					if( true )
-					{
-						import components.abstract.functions.dtrace;
-						import su.fishr.utils.Dumper;
-						import flash.utils.getTimer;
-						const log_I:String = String
-							(
-								"" +   getTimer()  + "  \t " +
-								"I project:  ConfLib"
-								+ "file:  UIDevicePowerK14.as"
-								+ ". funcname : " + ""
-								//+ "\r  dump(  ): " + Dumper.dump( true )
-								+ "\r i : " + i
-								+ "\r  value.array[ i ]: " + value.array[ i ]
-								+ "\r  getField( value.cmd, i ): " + getField( value.cmd, i + 1 ).getCellInfo()
-								+ "\r  Number( getField( value.cmd, i ) ): " + Number( getField( value.cmd, i + 1 ).getCellInfo() )
-								+ "\r  : " + true
-							);
-						
-						dtrace( log_I );
-					}
-					////////////////////////////////////////////////////////
-					
 					value.array[ i ]  = Number( getField( value.cmd, i + 1 ).getCellInfo() ) *  Lp.MULT;
 					
 				}
@@ -197,44 +169,7 @@ package components.screens.ui
 			return SavePerformer.CMD_TRIGGER_FALSE;
 		}
 		
-		private function onChangeVoltage(t:IFormString):void
-		{	
-			
-			return;
-			// получение информации от getField(CMD.VOLTAGE_LIMITS,4)
-			
-			var res:String = String(t.getCellInfo());
-			var r:Number = Number(t.getCellInfo())/Lp.MULT;
-			
-			switch( t.param ) {
-				case 4:
-					getField(0,1).setCellInfo( r.toFixed(1) );
-					getField(CMD.CPW_LIMITS,1).setName( loc("power_on_when_cpw1")+" ["+ r.toFixed(1)+loc("measure_volt_1l")+"] "+loc("power_on_when_cpw2") );
-					const ss:Array = loc("power_device_inclusion").split( ", " );
-					dlimitsGuided.getSign(1).text = ss[ 0 ] + ", " + r.toFixed(1) + ss[ 1 ]; 
-					break;
-				
-				case 3:
-					
-					getField(0,3).setCellInfo( r.toFixed(1) );
-					const s:Array = loc("voltage_for_fail_acu").split( ", " );
-					dlimitsGuided.getSign(0).text = s[ 0 ] + ", " + r.toFixed(1) + s[ 1 ];
-					
-					break;
-				
-				case 5:
-					
-					getField(0,2).setCellInfo( r.toFixed(1) );
-					const sr:Array = loc("voltage_for_recov_acu").split( ", " );
-					dlimitsGuided.getSign(2).text = sr[ 0 ] + ", " + r.toFixed(1) + sr[ 1 ];
-					
-					break;
-				
-				default:
-					break;
-			}
-			
-		}
+		
 		private function doChangeVoltage(t:IFormString):void
 		{
 			
@@ -252,7 +187,7 @@ package components.screens.ui
 		{
 			if (this.visible) { 
 				RequestAssembler.getInstance().fireEvent( new Request(CMD.BATTERY_LEVEL, put));
-				//RequestAssembler.getInstance().fireEvent( new Request(CMD.CPW_SENSOR, put));
+				
 			}
 		}
 		
@@ -262,14 +197,20 @@ package components.screens.ui
 			
 			if( !_chart )
 			{
-				const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) + .1;
-				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) - .1;
+				/*const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) + .02;
+				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) - .02;*/
+				
+				const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) - .3;
+				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) + .1;
 				
 				
 				// entry point
 				var legend:Array = [];
 				
+				//const len:int = ( maxV - minV ) / .05;
 				const len:int = 10;
+				
+				
 				var vl:String;
 				for( var i:int = 0; i < len; i++ )
 				{
@@ -279,6 +220,7 @@ package components.screens.ui
 					
 					
 				}
+				
 				
 				
 				
@@ -298,6 +240,7 @@ package components.screens.ui
 				Lp.MX_PWR = lineV1;
 				Lp.MN_DSCH = Lp.MN_PWR =  lineV2;
 				Lp.MX_DSCH = lineV5 - Lp.GAP;
+				Lp.MN_RECOV = lineV3 + Lp.GAP;
 				
 				_chart.createHLine("1"
 					, lineV1 
@@ -341,7 +284,7 @@ package components.screens.ui
 					, HLine.VALIGN_TOP
 				);
 				
-				_chart.createHBarLine( "BL2", 0x00, 5 );
+				_chart.createHBarLine( "BL2", COLOR.RED_DARK, 3 );
 			}
 			else
 			{
@@ -354,6 +297,7 @@ package components.screens.ui
 				Lp.MX_PWR = lineV11;
 				Lp.MN_DSCH = Lp.MN_PWR =  lineV12;
 				Lp.MX_DSCH = lineV15;
+				Lp.MN_RECOV = lineV13 + Lp.GAP;
 				
 				_chart.setLinePos( "1"
 									, lineV11
@@ -389,19 +333,28 @@ package components.screens.ui
 		{
 			var res:Number = rel;
 			var legend:String = "";
+			/// надо ли передвигать ползунок, или достаточно сменить текст надписи
+			var setp:Boolean = false;
 			
 			switch( name ) {
 				case "3":
 					
-					
-						if( rel > Lp.MX_DSCH )
-							res = Lp.MX_DSCH;
-						else if ( rel < Lp.MN_DSCH )
-							res = Lp.MN_DSCH;
-						else
-							res = rel;
+						Lp.MX_DSCH = Number( getField( CMD.VOLTAGE_LIMITS, 5 ).getCellInfo() ) - Lp.GAP;
 						
 						legend = loc("voltage_for_fail_acu");
+						if( rel >= Lp.MX_DSCH )
+						{
+							res = Lp.MX_DSCH;
+							setp = true;
+						}
+						
+						if ( rel <= Lp.MN_DSCH + Lp.GAP )
+						{
+							res = Lp.MN_DSCH + Lp.GAP;
+							setp = true;
+						}
+						
+						
 						
 						
 					break;
@@ -412,8 +365,20 @@ package components.screens.ui
 					break;
 				
 				case "5":
+					Lp.MN_RECOV = Number( getField( CMD.VOLTAGE_LIMITS, 3 ).getCellInfo() ) + Lp.GAP;
 					
-						
+					if( rel >= Lp.MX_PWR )
+					{
+						res = Lp.MX_PWR - Lp.GAP;
+						setp = true;
+					}
+					
+					if ( rel <= Lp.MN_RECOV )
+					{
+						res = Lp.MN_RECOV + Lp.GAP;
+						setp = true;
+					}
+					
 					legend = loc("voltage_for_recov_acu");
 					break;
 				
@@ -423,20 +388,25 @@ package components.screens.ui
 					
 			}
 			
-			if( res != Lp.MN_DSCH && res != Lp.MX_DSCH )
+			
+			
+			if( setp )
 			{
-				_chart.setLineInfo( name
+				
+				_chart.setLinePos( name
+					, res
 					, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )
 					, legend + Lp.SIMB + res.toFixed( 2 )
 				);
+				
 			}
 			else
 			{
-				_chart.setLinePos( name
-									, res
-									, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, legend + Lp.SIMB + res.toFixed( 2 )
-				);
+				
+				_chart.setLineInfo( name
+					, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )
+					, legend + Lp.SIMB + res.toFixed( 2 )
+				);	
 			}
 			
 			
@@ -447,79 +417,42 @@ package components.screens.ui
 		}
 	}
 }
-import components.interfaces.IDataAdapter;
-import components.interfaces.IFormString;
 
-class InputVoltageAdapter implements IDataAdapter
-{
-	
-	
-	public function adapt(value:Object):Object
-	{
-		
-		return ( Number( value ) / Lp.MULT ).toFixed( 2 );
-	}
-	public function change(value:Object):Object
-	{
-		
-		return value;
-	}
-	public function perform(field:IFormString):void
-	{
-		
-		
-	}
-	public function recover(value:Object):Object
-	{	
-		return Number( value ) * Lp.MULT;
-		
-		
-	}
-}
-class SmartVoltageAdapter implements IDataAdapter
-{
-	public function adapt(value:Object):Object
-	{
-		return value;
-	}
-	public function change(value:Object):Object
-	{
-		return value;
-	}
-	public function perform(field:IFormString):void
-	{
-	}
-	public function recover(value:Object):Object
-	{	// из за двойного прогона, сначала передается число 10, потом умноженное на LimitsPower.MULTIPLIER
-		var r:Number;
-		if (int(value)<100)
-			r = Number(value)*Lp.MULT;
-		else
-			r = Number(value);
-		
-		
-		return r;
-	}
-}
 
 
 class Lp
 {
-	// Верхний предел напряжение питания ( парам 1 ком 906 )
+	/**
+	 * Верхний предел напряжение питания ( парам 1 ком 906 )
+	 */
 	public static var MX_PWR:Number = 4.1;
-	// Нижний предел напряжение питания ( парам 2 ком 906 )
+	/**
+	 * Нижний предел напряжение питания ( парам 2 ком 906 )
+	 */
 	public static var MN_PWR:Number = 2.1;
 	public static var MAX_RECOVERY:Number = 4.4;
-	public static var MIN_RECOVERY:Number = 3.6;
-	public static var MIN_ONDEVICE:Number = 4;
-	/// мин уровень установки уровня разряда АКБ
+	
+	/**
+	 * мин уровень установки уровня разряда АКБ
+	 */
 	public static var MN_DSCH:Number = 2;
-	/// максимальный уровень установки уровня разряда АКБ
-	/// устанавливается в зависимости от уровня Восст. разряда
+	/**
+	 * максимальный уровень установки уровня разряда АКБ
+	 * устанавливается в зависимости от уровня Восст. разряда
+	 */
 	public static var MX_DSCH:Number = 2;
-	/// минимально допустимое расстояние между значениями восстановления и разряда АКБ
+	/**
+	 * мин уровень установки уровня восстановления разряда АКБ
+	 * устанавливается в зависимости от уровня разряда
+	 */
+	public static var MN_RECOV:Number = 2;
+	/**
+	 * минимально допустимое расстояние между значениями восстановления и разряда АКБ
+	 */
 	public static var GAP:Number = .01;
-	/// Множитель корректирующий значения прилетающие с прибора
+	/**
+	 * Множитель корректирующий значения прилетающие с прибора
+	 */
 	public static var MULT:Number = 1000;
 	/**
 	 * подставляемый знак между текстом и значением (-/=/~ )

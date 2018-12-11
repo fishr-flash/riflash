@@ -38,16 +38,17 @@ package components.gui.visual.charsGraphic.components
 			
 			
 			_fineLine = new Shape;
-			_fineLine.graphics.lineStyle( 1, _color );
+			_fineLine.graphics.lineStyle( 1, _color, .35 );
 			
 			_tf = createTFInfo( color );
+			_tf.alpha = .6;
 		}
 		
 		public function setYPos(vPixSize:Number, lbl:String ):void 
 		{
 			
 			const shape:Shape = new Shape;
-			shape.graphics.lineStyle( 1, _color );
+			shape.graphics.lineStyle( 2, _color );
 			shape.graphics.lineTo( _drawStep, vPixSize - _lastYPos );
 			shape.graphics.endFill();
 			shape.cacheAsBitmap = true;
@@ -73,8 +74,8 @@ package components.gui.visual.charsGraphic.components
 					if ( _fineLine.width !=  _ownerRect.width - _currentStep + 5 )
 					{
 						_fineLine.graphics.clear();
-						_fineLine.graphics.lineStyle( 1, _color );
-						_fineLine.graphics.lineTo( _ownerRect.width - _currentStep + 5, 0 );
+						_fineLine.graphics.lineStyle( 1, _color , .35 );
+						_fineLine.graphics.lineTo( _ownerRect.width - _currentStep + 85, 0 );
 					}
 					
 					this.addChild( _fineLine );

@@ -56,10 +56,19 @@ package components.gui.fields
 		public static const F_CELL_NOEDITBOX:int = 0x100000;
 		
 		
+		
 		public function FSSimple()
 		{
 			super();
 			construct();
+		}
+
+		public function set fcellBorderColor(value:Number):void
+		{
+			if( value == _cell.borderColor )
+										return;
+			_cell.borderColor = value;
+			
 		}
 
 		public function get cell():TextField

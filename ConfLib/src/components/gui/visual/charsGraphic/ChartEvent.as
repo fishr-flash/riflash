@@ -9,6 +9,8 @@ package components.gui.visual.charsGraphic
 	public class ChartEvent extends Event 
 	{
 		static public const DRAG_LINE:String = "dragLine";
+		static public const LINE_ONM:String = "lineOnM";
+		static public const LINE_UPM:String = "lineUpM";
 		
 		private var _data:Object;
 		public function get data():Object 

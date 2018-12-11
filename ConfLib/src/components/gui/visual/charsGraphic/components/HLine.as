@@ -1,6 +1,5 @@
 package components.gui.visual.charsGraphic.components 
 {
-	import aze.motion.eaze;
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
@@ -12,15 +11,18 @@ package components.gui.visual.charsGraphic.components
 	import flash.text.TextFormatAlign;
 	import flash.ui.Mouse;
 	import flash.ui.MouseCursor;
+	
+	import aze.motion.eaze;
+	
 	import components.gui.visual.charsGraphic.ChartEvent;
 	
 	public class HLine extends Sprite{
 		
 		public static const VALIGN_TOP:String = "valignTop";
 		public static const VALIGN_BOTTOM:String = "valignBottom";
+		public static const DURATION_TWEEN:Number = .7;
+		public static const ALPHA_TWEEN:Number = .35;
 		
-		private const DURATION_TWEEN:Number = 1.5;
-		private const ALPHA_TWEEN:Number = .65;
 		private var _mainW:int;
 		private var _stepDotted:int = 10;
 		private var _pointer:Sprite;
@@ -78,7 +80,7 @@ package components.gui.visual.charsGraphic.components
 		{
 			_line = drawLine( _mainW, color );
 			
-			if ( _dragable ) this.alpha = ALPHA_TWEEN;
+			//if ( _dragable ) this.alpha = ALPHA_TWEEN;
 			
 			this.addChild( _line );
 			
@@ -126,6 +128,16 @@ package components.gui.visual.charsGraphic.components
 			return this;
 		}
 		
+		public function startSilent():void
+		{
+			eaze( this ).to( DURATION_TWEEN, { alpha:ALPHA_TWEEN} );
+		}
+		
+		public function stopSilent():void
+		{
+			eaze( this ).to( DURATION_TWEEN, { alpha:1} );
+		}
+		
 		public function setCustomInfo( rel:String, legend:String = "" ):void
 		{
 			_customInfo.text = rel;
@@ -145,13 +157,14 @@ package components.gui.visual.charsGraphic.components
 			this.startDrag( false, _dragRect );
 			this.stage.addEventListener(MouseEvent.MOUSE_UP, onmUp );
 			this.stage.addEventListener(Event.MOUSE_LEAVE, onmUp );
-			this.addEventListener(Event.ENTER_FRAME, onMove );
+			this.stage.addEventListener(MouseEvent.MOUSE_MOVE, onMove );
 			this.alpha = 1;
+			this.dispatchEvent( new ChartEvent( ChartEvent.LINE_ONM, false, false, { name: this.name } ) );
 		}
 		
 		private function onMove(e:Event):void 
 		{
-			if ( this.y  ==  _oldY  ) return;
+			//if ( this.y  ==  _oldY  ) return;
 			_oldY = this.y;
 			
 			this.dispatchEvent( new ChartEvent( ChartEvent.DRAG_LINE, false, false, { name: this.name, ypos: this.y } ) );
@@ -161,12 +174,17 @@ package components.gui.visual.charsGraphic.components
 		
 		private function onmUp(e:MouseEvent):void 
 		{
+			
+			this.stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMove );
 			this.stage.removeEventListener(MouseEvent.MOUSE_UP, onmUp );
 			this.stage.removeEventListener(Event.MOUSE_LEAVE, onmUp );
 			onMouseOut( null );
 			this.stopDrag();
 			_pointer.addEventListener(MouseEvent.MOUSE_DOWN, onmDown );
-			runTween();
+			if( _oldY == _dragRect.height || _oldY == 0 )
+				this.dispatchEvent( new ChartEvent( ChartEvent.DRAG_LINE, false, false, { name: this.name, ypos: this.y } ) );
+			this.dispatchEvent( new ChartEvent( ChartEvent.LINE_UPM, false, false, { name: this.name } ) );
+			
 		}
 		
 		
@@ -181,6 +199,7 @@ package components.gui.visual.charsGraphic.components
 		
 		private function onMouseOut(e:MouseEvent):void 
 		{
+			this.removeEventListener(Event.ENTER_FRAME, onMove );
 			_pointer.removeEventListener(MouseEvent.MOUSE_OUT, onMouseOut );
 			_touchField.visible = false;
 			Mouse.cursor = MouseCursor.AUTO;
@@ -286,10 +305,7 @@ package components.gui.visual.charsGraphic.components
 		}
 		
 		
-		private function runTween():void
-		{
-			eaze( this ).to( DURATION_TWEEN, { alpha:ALPHA_TWEEN} );
-		}
+		
 		
 		
 	}

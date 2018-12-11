@@ -1,8 +1,9 @@
 package components.gui.visual.charsGraphic 
 {
-	import components.gui.visual.charsGraphic.DiapasonAdapterHor;
 	import flash.display.Sprite;
 	import flash.geom.Rectangle;
+	
+	import components.gui.visual.charsGraphic.DiapasonAdapterHor;
 	import components.gui.visual.charsGraphic.components.CellularField;
 	import components.gui.visual.charsGraphic.components.HBarLine;
 	import components.gui.visual.charsGraphic.components.HLine;
@@ -17,9 +18,20 @@ package components.gui.visual.charsGraphic
 		private var hLines:Vector.<HLine> = new Vector.<HLine>();
 		private var _mainSizes:Rectangle;
 		private var _adapt:DiapasonAdapterHor;
+
+		/**
+		 * т.к. горизонтальная ось не является шкалой времени, а шагов-изменений
+		 * нет смысла рисовать одинаковые данные, рисуем только изменения
+		 * ( годится только когда у нас только один график такого типа )
+		 */
+		public function get lastBarY():Number
+		{
+			return _lastBarY;
+		}
+
 		private var _callback:Function;
 		private var _hBLines:Vector.<HBarLine>;
-		
+		private var _lastBarY:Number = 0;
 		public function ChartOfIndications() 
 		{
 			super();
@@ -62,9 +74,30 @@ package components.gui.visual.charsGraphic
 			{
 				line.dragRect = new Rectangle( 0, 0, 0, _mainSizes.height );
 				line.addEventListener( ChartEvent.DRAG_LINE, dragLine );
+				line.addEventListener( ChartEvent.LINE_ONM, changeLine );
+				line.addEventListener( ChartEvent.LINE_UPM, changeLine );
+				
 			}
 			
 			changeValign( line );
+		}
+		
+		protected function changeLine(event:ChartEvent):void
+		{
+			
+			
+			var len:int = hLines.length;
+			for (var i:int=0; i<len; i++) {
+				if( hLines[ i ].name != event.data.name )
+				{
+					if( event.type == ChartEvent.LINE_ONM )
+						hLines[ i ].startSilent();
+					else
+						hLines[ i ].stopSilent();
+							
+				}
+										
+			}
 		}
 		
 		public function createHBarLine( name:String, color:uint, drawStep:int = 1 ):void 
@@ -84,6 +117,10 @@ package components.gui.visual.charsGraphic
 		
 		public function setBar( name:String, rel:Number, lbl:String = ""):void 
 		{
+			
+			
+			_lastBarY = rel;
+			
 			var line:HBarLine = null;
 			const len:int = _hBLines.length;
 			for ( var i:int = 0; i < len; i++ )
@@ -98,13 +135,16 @@ package components.gui.visual.charsGraphic
 			
 			
 			
-			if ( line )
+			if ( line  )
 			{
 				var py:Number = _adapt.getVPixSize( rel );
 				if ( py > _mainSizes.height ) py = _mainSizes.height;
 				if ( py < 0 ) py = 0;
-				
 				line.setYPos( py , lbl );
+				
+																					
+					
+				
 				
 			}
 		}
