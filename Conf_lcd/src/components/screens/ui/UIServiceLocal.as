@@ -1,6 +1,6 @@
 package components.screens.ui
 {
-	import components.static.DEVICES;
+	
 
 	public class UIServiceLocal extends UIServiceAdv
 	{

@@ -6,3 +6,6 @@
 /progs/
 /ritm_configs/
 /initial.bat
+*.actionScriptProperties
+*.flexProperties
+*source.swf
