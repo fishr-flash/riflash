@@ -425,7 +425,7 @@ package components.screens.ui
 					
 			}
 			
-			if( res != Lp.MN_DSCH && res != Lp.MX_PWR )
+			if( res != Lp.MN_DSCH && res != Lp.MX_DSCH )
 			{
 				_chart.setLineInfo( name
 					, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )

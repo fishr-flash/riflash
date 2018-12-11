@@ -8,4 +8,7 @@
 /initial.bat
 *.actionScriptProperties
 *.flexProperties
-*source.swf
+**/source.swf
+**source.swf
+/**source.swf
+**Founder.swf
