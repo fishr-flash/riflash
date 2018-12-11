@@ -267,8 +267,9 @@ package components.screens.ui
 			
 			if( !_chart )
 			{
-				const minV:Number = 2;
-				const maxV:Number = 5;
+				const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) + .1;
+				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) - .1;
+				
 				
 				// entry point
 				var legend:Array = [];
@@ -424,7 +425,7 @@ package components.screens.ui
 					
 			}
 			
-			if( res == rel )
+			if( res != Lp.MN_DSCH && res != Lp.MX_PWR )
 			{
 				_chart.setLineInfo( name
 					, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )
