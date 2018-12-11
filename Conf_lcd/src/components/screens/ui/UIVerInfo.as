@@ -6,7 +6,7 @@ package components.screens.ui
 	import components.protocol.statics.OPERATOR;
 	import components.static.CMD;
 	import components.static.COLOR;
-	import components.static.DS;
+	import components.static.DEVICES;
 	import components.static.PAGE;
 	
 	public class UIVerInfo extends UI_BaseComponent
@@ -49,8 +49,8 @@ package components.screens.ui
 			super.open();
 			
 			var vinfo:Array = OPERATOR.dataModel.getData(CMD.VER_INFO)[0];
-			getField( CMD.VER_INFO,1 ).setCellInfo( DS.name );
-			getField( CMD.VER_INFO,2 ).setCellInfo( getString(vinfo[1])+ " "+DS.getCommit() );
+			getField( CMD.VER_INFO,1 ).setCellInfo( DEVICES.name );
+			getField( CMD.VER_INFO,2 ).setCellInfo( getString(vinfo[1])+ " "+DEVICES.getCommit() );
 			getField( CMD.VER_INFO,3 ).setCellInfo( getString(vinfo[2]) );
 			
 			loadComplete();

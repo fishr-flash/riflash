@@ -8,7 +8,7 @@ package foundation.functions
 	import components.protocol.RequestAssembler;
 	import components.protocol.statics.CLIENT;
 	import components.protocol.statics.SERVER;
-	import components.static.DS;
+	import components.static.DEVICES;
 	import components.static.MISC;
 	import components.system.CONST;
 	
@@ -88,7 +88,7 @@ package foundation.functions
 				pass = false;
 			
 			if (pass) {
-				Warning.show( LOC.loc("sys_connected")+" "+DS.name+" (" + fullversion+")", Warning.TYPE_SUCCESS, Warning.STATUS_DEVICE );
+				Warning.show( LOC.loc("sys_connected")+" "+DEVICES.name+" (" + fullversion+")", Warning.TYPE_SUCCESS, Warning.STATUS_DEVICE );
 				founder.load();
 			} else {
 				load();

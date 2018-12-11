@@ -100,11 +100,15 @@ package components.screens.ui
 		
 		override public function put(p:Package):void
 		{
+			var rel:Number = 0;
 			switch( p.cmd ) 
 			{
 				case CMD.BATTERY_LEVEL:
-					pdistribute( p );
+					rel = Number( p.data[ 0 ][ 1 ] ) / 1000;
+					getField( p.cmd, 2 ).setCellInfo( rel.toFixed( 2 ) );
 					
+					
+					if( _chart )_chart.setBar( "BL2", rel, rel.toFixed( 2 ) + loc( "measure_volt_1l" ) );
 					if (!task)
 						task = TaskManager.callLater( onRequestVoltage, TaskManager.DELAY_5SEC );
 					else
@@ -142,27 +146,6 @@ package components.screens.ui
 		
 		private function refine(value:Object):int
 		{
-			////////////////////TRACE//////////////////////////////
-			///TODO: trace
-			if( true )
-			{
-				import components.abstract.functions.dtrace;
-				import su.fishr.utils.Dumper;
-				import flash.utils.getTimer;
-				const log_I:String = String
-					(
-						"" +   getTimer()  + "  \t " +
-						"I project:  ConfLib"
-						+ "file:  UIDevicePowerK14.as"
-						+ ". funcname : " + ""
-						//+ "\r  dump(  ): " + Dumper.dump( true )
-						+ "\r  value: " + value
-						+ "\r  : " + true
-					);
-				
-				dtrace( log_I );
-			}
-			////////////////////////////////////////////////////////
 			
 			if(value is int) {
 				switch(value) {
@@ -172,32 +155,44 @@ package components.screens.ui
 				}
 			} else {
 				
-				////////////////////TRACE//////////////////////////////
-				///TODO: trace
-				if( true )
-				{
-					import components.abstract.functions.dtrace;
-					import su.fishr.utils.Dumper;
-					import flash.utils.getTimer;
-					const log_II:String = String
-						(
-							"" +   getTimer()  + "  \t " +
-							"II project:  ConfLib"
-							+ "file:  UIDevicePowerK14.as"
-							+ ". funcname : " + ""
-							+ "\r  dump( value ): " + Dumper.dump( value )
-							//+ "\r  dump(  ): " + Dumper.dump( true )
-							+ "\r  : " + true
-						);
-					
-					dtrace( log_II );
-				}
-				////////////////////////////////////////////////////////
+				
 				
 				/*var cmd:int = value.cmd;
 				value.array[ 0 ] = 1;*/
 				//return SavePerformer.CMD_TRIGGER_BREAK;
 				//return SavePerformer.CMD_TRIGGER_CONTINUE;
+				
+				const len:int =value.array.length;
+				for (var i:int=0; i<len; i++) {
+					////////////////////TRACE//////////////////////////////
+					///TODO: trace
+					if( true )
+					{
+						import components.abstract.functions.dtrace;
+						import su.fishr.utils.Dumper;
+						import flash.utils.getTimer;
+						const log_I:String = String
+							(
+								"" +   getTimer()  + "  \t " +
+								"I project:  ConfLib"
+								+ "file:  UIDevicePowerK14.as"
+								+ ". funcname : " + ""
+								//+ "\r  dump(  ): " + Dumper.dump( true )
+								+ "\r i : " + i
+								+ "\r  value.array[ i ]: " + value.array[ i ]
+								+ "\r  getField( value.cmd, i ): " + getField( value.cmd, i + 1 ).getCellInfo()
+								+ "\r  Number( getField( value.cmd, i ) ): " + Number( getField( value.cmd, i + 1 ).getCellInfo() )
+								+ "\r  : " + true
+							);
+						
+						dtrace( log_I );
+					}
+					////////////////////////////////////////////////////////
+					
+					value.array[ i ]  = Number( getField( value.cmd, i + 1 ).getCellInfo() ) *  Lp.MULT;
+					
+				}
+				
 			}
 			return SavePerformer.CMD_TRIGGER_FALSE;
 		}
@@ -205,7 +200,7 @@ package components.screens.ui
 		private function onChangeVoltage(t:IFormString):void
 		{	
 			
-			
+			return;
 			// получение информации от getField(CMD.VOLTAGE_LIMITS,4)
 			
 			var res:String = String(t.getCellInfo());
@@ -309,7 +304,7 @@ package components.screens.ui
 					, COLOR.RED
 					, false
 					, " " + lineV1.toFixed( 2 ) + loc( "measure_volt_1l" )
-					, loc("power_upper_voltage_limit") + " =" + lineV1.toFixed( 2 )
+					, loc("power_upper_voltage_limit") + Lp.SIMB + lineV1.toFixed( 2 )
 					, HLine.VALIGN_BOTTOM
 					
 				);
@@ -318,7 +313,7 @@ package components.screens.ui
 					, COLOR.GREY_ARSENIC
 					, false
 					, " " + lineV2.toFixed( 2 ) + loc( "measure_volt_1l" )
-					, loc("power_lower_voltage_limit") + " =" + lineV2.toFixed( 2 )
+					, loc("power_lower_voltage_limit") + Lp.SIMB + lineV2.toFixed( 2 )
 					, HLine.VALIGN_TOP
 				);
 				_chart.createHLine("3"
@@ -326,7 +321,7 @@ package components.screens.ui
 					, 0xba7000
 					, true
 					, " " + lineV3.toFixed( 2 ) + loc( "measure_volt_1l" )
-					, loc("voltage_for_fail_acu") + " =" + lineV3.toFixed( 2 )
+					, loc("voltage_for_fail_acu") + Lp.SIMB + lineV3.toFixed( 2 )
 					, HLine.VALIGN_TOP
 				);
 				_chart.createHLine("4"
@@ -334,7 +329,7 @@ package components.screens.ui
 					, COLOR.GREEN
 					, true
 					, " " + lineV4.toFixed( 2 ) + loc( "measure_volt_1l" )
-					, loc("power_on_when_voltage_reach") + " =" + lineV4.toFixed( 2 )
+					, loc("power_on_when_voltage_reach") + Lp.SIMB + lineV4.toFixed( 2 )
 					, HLine.VALIGN_TOP
 				);
 				_chart.createHLine("5"
@@ -342,9 +337,11 @@ package components.screens.ui
 					, COLOR.VIOLET
 					, true
 					, " " + lineV5.toFixed( 2 ) + loc( "measure_volt_1l" )
-					, loc("voltage_for_recov_acu") + " =" + lineV5.toFixed( 2 )
+					, loc("voltage_for_recov_acu") + Lp.SIMB + lineV5.toFixed( 2 )
 					, HLine.VALIGN_TOP
 				);
+				
+				_chart.createHBarLine( "BL2", 0x00, 5 );
 			}
 			else
 			{
@@ -361,27 +358,27 @@ package components.screens.ui
 				_chart.setLinePos( "1"
 									, lineV11
 									, lineV11.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, loc("power_upper_voltage_limit") + " =" + lineV11.toFixed( 2 )
+									, loc("power_upper_voltage_limit") + Lp.SIMB + lineV11.toFixed( 2 )
 									);
 				_chart.setLinePos( "2"
 									, lineV12
 									, lineV12.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, loc("power_lower_voltage_limit") + " =" + lineV12.toFixed( 2 )
+									, loc("power_lower_voltage_limit") + Lp.SIMB + lineV12.toFixed( 2 )
 									);
 				_chart.setLinePos( "3"
 									, lineV13
 									, lineV13.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, loc("voltage_for_fail_acu") + " =" + lineV13.toFixed( 2 )
+									, loc("voltage_for_fail_acu") + Lp.SIMB + lineV13.toFixed( 2 )
 									);
 				_chart.setLinePos( "4"
 									, lineV14
 									, lineV14.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, loc("power_on_when_voltage_reach") + " =" + lineV14.toFixed( 2 )
+									, loc("power_on_when_voltage_reach") + Lp.SIMB + lineV14.toFixed( 2 )
 									);
 				_chart.setLinePos( "5"
 									, lineV15
 									, lineV15.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, loc("voltage_for_recov_acu") + " =" + lineV15.toFixed( 2 )
+									, loc("voltage_for_recov_acu") + Lp.SIMB + lineV15.toFixed( 2 )
 									);
 									
 			}
@@ -391,6 +388,7 @@ package components.screens.ui
 		private function updateLimits( name:String, rel:Number ):void
 		{
 			var res:Number = rel;
+			var legend:String = "";
 			
 			switch( name ) {
 				case "3":
@@ -403,20 +401,20 @@ package components.screens.ui
 						else
 							res = rel;
 						
-					
+						legend = loc("voltage_for_fail_acu");
 						
 						
 					break;
 				
 				case "4":
-					
+					legend = loc("power_on_when_voltage_reach");
 						
 					break;
 				
 				case "5":
 					
 						
-						
+					legend = loc("voltage_for_recov_acu");
 					break;
 				
 				default:
@@ -429,7 +427,7 @@ package components.screens.ui
 			{
 				_chart.setLineInfo( name
 					, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )
-					, loc("voltage_for_fail_acu") + " =" + res.toFixed( 2 )
+					, legend + Lp.SIMB + res.toFixed( 2 )
 				);
 			}
 			else
@@ -437,7 +435,7 @@ package components.screens.ui
 				_chart.setLinePos( name
 									, res
 									, " " + res.toFixed( 2 ) + loc( "measure_volt_1l" )
-									, loc("voltage_for_fail_acu") + " =" + res.toFixed( 2 )
+									, legend + Lp.SIMB + res.toFixed( 2 )
 				);
 			}
 			
@@ -523,6 +521,10 @@ class Lp
 	public static var GAP:Number = .01;
 	/// Множитель корректирующий значения прилетающие с прибора
 	public static var MULT:Number = 1000;
+	/**
+	 * подставляемый знак между текстом и значением (-/=/~ )
+	 */
+	public static var SIMB:String = " ~";
 	
  
 	

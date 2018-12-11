@@ -5,7 +5,7 @@ package components.screens.ui
 	import components.abstract.functions.loc;
 	import components.abstract.servants.TabOperator;
 	import components.basement.UI_BaseComponent;
-	import components.static.DS;
+	import components.static.DEVICES;
 	
 	public class UISensorMenu extends UI_BaseComponent
 	{
@@ -29,7 +29,7 @@ package components.screens.ui
 			initNavi();
 			navi.setUp( openSensor, 10 );
 			
-			if ( DS.isDevice(DS.ACC2) ) {
+			if ( DEVICES.isDevice(DEVICES.ACC2) ) {
 				navi.addButton( loc("sensor_incline"), S_NAKLONA, TabOperator.GROUP_BUTTONS + S_NAKLONA*1000 );
 				navi.addButton( loc("sensor_crash"), S_HIT, TabOperator.GROUP_BUTTONS + (S_HIT)*1000 );
 			}
@@ -63,7 +63,7 @@ package components.screens.ui
 				case S_NAKLONA:
 					if (!uiSensorIncline) {
 						uiSensorIncline = new UISensorIncline(TabOperator.GROUP_BUTTONS+num*1000);
-					//	if ( DS.isDevice(DS.ACC2) )
+					//	if ( DEVICES.isDevice(DEVICES.ACC2) )
 							uiSensorIncline.addEventListener( Event.CHANGE, onBlockNavi );
 					}
 					ui = uiSensorIncline;
