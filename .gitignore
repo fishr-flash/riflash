@@ -10,7 +10,7 @@
 *.flexProperties
 **/source.swf
 **source.swf
-/**source.swf
+/**/source.swf
 **Founder.swf
 **history.css
 **history.js

@@ -24,7 +24,7 @@ package components.system
 		public static var CLIENT_BUILD_VERSION:String = "";
 		public static var VERSION:String = ""; 
 		private static const BUILDVER:String = "005.414";	// c 008 нет запроса на 843 порт
-		public static const DEBUG:Boolean = 1 == 1;	// При экспорте поправить FSShadow
+		public static const DEBUG:Boolean = 1 == 0;	// При экспорте поправить FSShadow
 
 		public static const PRESET:Array = [ { /*zerro config, not use*/ },
 			{	// 1 - K5
