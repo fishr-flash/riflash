@@ -405,7 +405,6 @@ package components.screens.ui
 					moveLine( hLimits[1], res );
 					
 					
-					
 					break;
 				
 				
@@ -433,12 +432,6 @@ package components.screens.ui
 			t.y = getYByAcp( Math.round(value) );
 			t.updateCoords();
 			colorizeHLimits( false );
-		}
-		
-		private function onSlowTick():void
-		{
-			// TODO Auto Generated method stub
-			
 		}
 		
 		private function addMeasure( elt:IFormString ):void
@@ -613,7 +606,10 @@ class VectorScreen extends UI_BaseComponent
 		vScreenCpu.x = globalX + 50;
 		vScreenCpu.y = globalY;
 		
-		if ( DS.isfam(DS.K5 ) || DS.isDevice(DS.V2) ||  DS.isDevice( DS.K16) ) {
+		if ( DS.isfam(DS.K5 ) 
+			|| DS.isfam(DS.K9 ) 
+			|| DS.isDevice(DS.V2) 
+			||  DS.isDevice( DS.K16) ) {
 			vScreenOuter = new VectorDrawScreenU(COLOR.RED,gear);
 			addChild( vScreenOuter );
 			vScreenOuter.setup( graphStep );

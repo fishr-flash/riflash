@@ -26,7 +26,7 @@ package components.system
 		public static var VERSION:String = "";
 		private static const BUILDVER:String = "034.293";	// 029.002 no 843 port
 		///  1 - on debug
-		public static const DEBUG:Boolean = 1 == 1; 
+		public static const DEBUG:Boolean = 1 == 0; 
 
 		public static const VOYAGER_PAR_STRUCTURES:int=1;
 		
@@ -435,6 +435,8 @@ package components.system
 				case 2:
 					
 					OPERATOR.getSchema( CMD.CONNECT_SERVER).StructCount = 4;
+					
+					OPERATOR.getSchema( CMD.EGTS_SUBRECORD_TELEDATA_EN).StructCount = 3;
 					
 					switch( DS.alias ) {
 						case DS.isfam( DS.V2 ):

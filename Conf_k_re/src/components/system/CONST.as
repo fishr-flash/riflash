@@ -19,11 +19,11 @@ package components.system
 		// 6 - K5-RT3 K-RT3_and_K-RT3L_and_K-RT3-3G
 
 		
-		public static const PRESET_NUM:int= 1;
+		public static const PRESET_NUM:int= 2;
 /** GLOBAL CONST	*/
 		public static var CLIENT_BUILD_VERSION:String = "";
 		public static var VERSION:String = ""; 
-		private static const BUILDVER:String = "005.411";	// c 008 нет запроса на 843 порт
+		private static const BUILDVER:String = "005.414";	// c 008 нет запроса на 843 порт
 		public static const DEBUG:Boolean = 1 == 1;	// При экспорте поправить FSShadow
 
 		public static const PRESET:Array = [ { /*zerro config, not use*/ },

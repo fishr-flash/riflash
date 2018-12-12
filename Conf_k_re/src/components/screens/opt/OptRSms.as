@@ -87,10 +87,13 @@ package components.screens.opt
 		{
 			var uir:Array = UIRSms.SMS_TEXT;
 			
+			
+			
 			if (DS.isfam(DS.K1))
 				getField(0,2).setCellInfo( UIRSms.SMS_TEXT[getStructure()] );
 			else
 				getField(0,2).setCellInfo( UIRSms.SMS_TEXT[localnumber-1] );
+			
 			fsmslen.setCellInfo( p.getValidStructure()[0] );
 			
 			var s:String = p.getValidStructure()[1];

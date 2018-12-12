@@ -127,7 +127,7 @@ package components.resources
 			}
 			else
 			{
-				if( !DS.isDevice( DS.A_BRD ) )
+				if( DS.isDevice( DS.isfam( DS.K5,  DS.A_BRD ) ) )
 				{
 					a.splice( 67, 2 ); // удавление пунктов Неиспр. телефонной линии и Восст.Неисправность тел линии	
 				}

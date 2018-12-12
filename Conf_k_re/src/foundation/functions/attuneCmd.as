@@ -52,7 +52,7 @@ package foundation.functions
 			case DS.K9M:
 			case DS.K9K:
 				OPERATOR.getSchema( CMD.K5_OUT_DRIVE).StructCount = 2;
-				OPERATOR.getSchema( CMD.K5_SMS_TEXT).StructCount = 77;
+				OPERATOR.getSchema( CMD.K5_SMS_TEXT).StructCount = 78;
 				OPERATOR.getSchema( CMD.K5_KBD_KEY).StructCount = 10;
 				OPERATOR.getSchema( CMD.K5_ADC_TRESH).StructCount = 3;
 				OPERATOR.getSchema( CMD.K5_TM_KEY).StructCount = 16;

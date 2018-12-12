@@ -81,8 +81,6 @@ package components.screens.ui
 			var a:Array = Resources.SmsArray();
 			SMS_TEXT = a[0];
 			
-			
-			
 			SMS_DEFAULT = a[1];
 		}
 		override public function open():void
@@ -106,6 +104,8 @@ package components.screens.ui
 					}
 				}
 			} else {
+				
+				
 				for (i=0; i<len; i++) {
 					RequestAssembler.getInstance().fireEvent( new Request( CMD.K5_SMS_TEXT, put, i+1) );
 					

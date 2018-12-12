@@ -105,6 +105,8 @@ package components.gui
 				i = new cls(p.structure);
 			else
 				i = new cls(list.length);
+			
+			
 			layer.addChild( i as DisplayObject );
 			(i as EventDispatcher).addEventListener( MouseEvent.CLICK, onSelect );
 			i.y = i.height*list.length;

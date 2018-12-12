@@ -147,7 +147,7 @@ package components.screens.ui
 			FLAG_SAVABLE = false;
 			var isakb:Boolean = DS.app != "006"; 
 			
-			if( DS.isfam( DS.K5 ) && int( DS.app ) != 6 && int( DS.app ) != 8 )
+			if( (  DS.isfam( DS.K5 ) && int( DS.app ) != 6 && int( DS.app ) != 8 ) || DS.isfam( DS.K9 ) )
 			{
 				addui( new FSCheckBox, 0, loc("ui_sysev_gen_acu_fail"), onFailAkb, 2 );
 				attuneElement( wid+cwid-13);
