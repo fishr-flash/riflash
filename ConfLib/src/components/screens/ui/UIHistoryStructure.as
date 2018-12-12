@@ -40,7 +40,7 @@ package components.screens.ui
 	public class UIHistoryStructure extends UI_BaseComponent implements IResizeDependant
 	{
 		private const LAST_SYSTEM_PARAM:int = 9;
-		private const MAX_LENGHT_RECORD:int = 200;
+		private var _maxLenghtRecord:int = 200;
 		
 		private var STRUCTURES:int;
 		
@@ -75,17 +75,26 @@ package components.screens.ui
 			//STRUCTURES = CONST.VOYAGER_PAR_STRUCTURES;
 			STRUCTURES = 1;
 			
+			if( DS.isDevice( DS.V_ASN ) )
+					_maxLenghtRecord = 300;
+			
 			SAVE_BITS = new Vector.<Array>(STRUCTURES);
 			
 			FLAG_SAVABLE = false;
 			
-			//const reg:RegExp = /^1\d\d|\d?\d|200$/x;
-			const reg:RegExp = /^200|1?\d?\d$/;
+			
+			var reg:RegExp;
+			
+			if( !DS.isDevice( DS.V_ASN ) )
+				reg = /^200|1?\d?\d$/;
+			else
+				reg = /^300|(1|2)?\d?\d$/;
+				
 			createUIElement( new FSSimple, 0, loc("his_line_size"),null,1, null, "", 0, reg );
 			attuneElement( 300, NaN, FSSimple.F_CELL_NOTSELECTABLE );
 			//FLAG_SAVABLE = false;
 			globalY -= 12;
-			const lbl:String = loc( "misc_save_impossible" ) + "! " + loc("no_very_long" )  + " " + MAX_LENGHT_RECORD + " " + loc( "g_byte" ) + "!";
+			const lbl:String = loc( "misc_save_impossible" ) + "! " + loc("no_very_long" )  + " " + _maxLenghtRecord + " " + loc( "g_byte" ) + "!";
 			addui( new FormString, 0, lbl, null, 3 );
 			attuneElement( 550, NaN, FormString.F_TEXT_BOLD );
 			( getLastElement() as FormString ).setTextColor( COLOR.RED_BLOOD );
@@ -329,7 +338,7 @@ package components.screens.ui
 			
 
 			
-			if( arr[ 0 ] > MAX_LENGHT_RECORD )
+			if( arr[ 0 ] > _maxLenghtRecord )
 			{
 				SavePerformer.forgetBlank();
 				getField( 0, 3 ).visible = true;

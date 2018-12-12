@@ -14,7 +14,7 @@ package components.system
 	public class CONST
 	{
 /** GLOBAL CONST	*/
-		public static const CLIENT_BUILD_VERSION:String = "K-16.017.118";
+		public static const CLIENT_BUILD_VERSION:String = "K-16.017.119";
 
 		public static var VERSION:String = "K-16_and_K-16-3G";
 		public static const DEBUG:Boolean = 1 == 1;

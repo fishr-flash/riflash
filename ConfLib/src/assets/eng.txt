@@ -750,7 +750,7 @@
 "service_do_history_retranslate":"Repeat transmitting the whole history",
 "service_sure_do_history_retranslate":"Are you sure to continue repeated transmitting the whole history?",
 "service_cmd_processing":"Command is in processing, after that the device will be reloaded",
-"service_klan_disable_time":"Time required for disconnection \rof Ethernet module \"Archon\"  contact from the server, in minutes \r(used at joint use with object device \"Archon"\rfor fro forced connection with the server)",
+"service_klan_disable_time":"Time required for disconnection \rof Ethernet module \"Archon\"  contact from the server, in minutes \r(used at joint use with object device \"Archon\"\rfor fro forced connection with the server)",
 "service_interrupt_load_to_device":"Interrupt loading into the device",
 "service_save_from_device_to_file":"Store from the device into the file",
 "service_save_to_file":"Store into the file",
@@ -2590,8 +2590,8 @@
 "g_off":"Off",
 
 "output_k9_ok1":"Output OK",
-"output_k9_ok2":"Indication of area status assigned on button \"Exit\"",
-"output_k9_ok3":"(siren)",
+"output_k9_ok2_x":"Indication of area status assigned on button \"Exit\"",
+"output_k9_ok3_x":"(siren)",
 
 "gms_try_register":"Trying to register on a GSM network",
 
@@ -2858,9 +2858,9 @@
 "egts_stat_cn104":"Number of the oldest point in the device log",
 "egts_stat_cn105":"Data and time of the oldest point (UTC)",
 "egts_stat_enable":"Allow EGTS statistics transfer",
-"egts_stat_":"Number of all confirmed entries transfered to server",
-"egts_stat_":"Number of entries failed to transfer",
-"egts_stat_":"Number of server connections",
+"egts_stat_x":"Number of all confirmed entries transfered to server",
+"egts_stat_xx":"Number of entries failed to transfer",
+"egts_stat_xxx":"Number of server connections",
 
 
 
@@ -2949,7 +2949,7 @@
 "vhis_63":"Counter of SMS sent per day",
 "load_font_and_icon":"Load icons and font to device memory",
 "send_subrecord":"Transfer subrecord",
-"ui_out_controlled_atcmd":"Control of outputs from setup program",
+"ui_out_controlled_atcmd_II":"Control of outputs from setup program",
 "ui_part_chserver":"Server check",
 "received_cid_from_the_bolid":"Receiving CID from the Bolid C2000-PP via RS-232TTL port",
 "ui_linkch_sim1_call":"Voice call via SIM1",
@@ -3054,7 +3054,7 @@
 "select_cantype_warn_popup_nota":"Changing the \"Assignment\" setting can lead to errors when working with the onboard computer. Before the operating with the CAN-bus, please, carefully study the setup and connection recommendations in the Voyager Satellite Tracking System Operator's Manual.",
 "count_doors":"The number of doors",
 "delay_for_close":"Delay closing ( recommended 0.5-5) seconds.",
-"time_out":"Время ожидания завершено",
+
 
 "marking_object":"Video marking (object or vehicle number)",
 "is_out":"N/A",
@@ -3133,7 +3133,7 @@
 "event_of_AdemcoId":"AdemcoID",
 "egts_priority":"EGTS priority",
 
-"4501":"450.1 Аrea arming is impossible",
+"4501_x":"450.1 Аrea arming is impossible",
 
 "sensor_angle_of_turn":"Angle sensor",
 "tilt_angle_sensor1":"Tilt sensor 1",

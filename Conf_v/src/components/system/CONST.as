@@ -24,7 +24,7 @@ package components.system
 /** GLOBAL CONST	*/
 		public static var CLIENT_BUILD_VERSION:String = "";
 		public static var VERSION:String = "";
-		private static const BUILDVER:String = "034.291";	// 029.002 no 843 port
+		private static const BUILDVER:String = "034.293";	// 029.002 no 843 port
 		///  1 - on debug
 		public static const DEBUG:Boolean = 1 == 1; 
 
@@ -118,7 +118,6 @@ package components.system
 					{label:loc("navi_param_egts"), data:NAVI.PARAMS_EGTS, cmds:[
 																				CMD.PROTOCOL_TYPE
 																				, CMD.EGTS_FLAG_ENABLE
-																				, CMD.VR_EGTS_PRIORITY 
 																				, CMD.EGTS_UNIT_HOME_DISPATCHER_ID]  },// , CMD.EGTS_SUBRECORD_TELEDATA_EN] },
 				//	{label:loc("navi_param_egts"), data:NAVI.PARAMS_EGTS, cmds:[CMD.EGTS_UNIT_HOME_DISPATCHER_ID,CMD.EGTS_CNT_STAT_SEND_ENABLE] },
 					/*{label:loc("navi_param_egts"), data:NAVI.PARAMS_EGTS, cmds:[CMD.EGTS_UNIT_HOME_DISPATCHER_ID,CMD.EGTS_CNT_STAT_SEND_ENABLE, 
