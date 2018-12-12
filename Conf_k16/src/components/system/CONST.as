@@ -14,10 +14,10 @@ package components.system
 	public class CONST
 	{
 /** GLOBAL CONST	*/
-		public static const CLIENT_BUILD_VERSION:String = "K-16.017.117";
+		public static const CLIENT_BUILD_VERSION:String = "K-16.017.118";
 
 		public static var VERSION:String = "K-16_and_K-16-3G";
-		public static const DEBUG:Boolean = 1 == 0;
+		public static const DEBUG:Boolean = 1 == 1;
 /** LOAD SWITCHES */
 		public static var MENU_GROUP:int = 0;
 		public static const USE_GPRS_COMPR:Boolean = true;

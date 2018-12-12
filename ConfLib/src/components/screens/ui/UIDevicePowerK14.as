@@ -199,9 +199,11 @@ package components.screens.ui
 			{
 				/*const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) + .02;
 				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) - .02;*/
-				
-				const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) - .3;
-				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) + .1;
+				/// отрицательные значения добавляют высоту графика, положительные сужают
+				const clearanceMax:Number = -.1;
+				const clearanceMin:Number = -.1;
+				const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) - clearanceMax;
+				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) + clearanceMin;
 				
 				
 				// entry point

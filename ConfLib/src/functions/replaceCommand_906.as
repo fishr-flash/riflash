@@ -8,7 +8,7 @@ package functions
 	{
 		b.position = 0;
 		var xml:XML = XML( b.toString() );
-		
+		b.position = 0;
 		const param3:XML =  <ParameterDataModel>
 									<Order>3</Order>
 									<Value>11000</Value>
@@ -19,7 +19,14 @@ package functions
 									<Value>12000</Value>
 								</ParameterDataModel>;
 		
-		const parent:XML = xml.CommandDataModel.(Id == 906 ).Structures[ 0 ].StructureDataModel[ 0 ].Parameters[ 0 ];
+		
+		const model:XML = xml.CommandDataModel.(Id == 906 )[ 0 ];
+		
+		/// если данные команды отсутствуют ( напр сохранены не все разделы )
+		if( !model ) 
+			return b;
+		const parent:XML = model.Structures[ 0 ].StructureDataModel[ 0 ].Parameters[ 0 ];
+		
 		
 		const count:int = parent.ParameterDataModel.length();
 		if ( count < 5 )

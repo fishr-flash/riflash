@@ -16,7 +16,7 @@ package components.system
 /** GLOBAL CONST	*/
 		public static var CLIENT_BUILD_VERSION:String = "";
 		public static var VERSION:String = "";
-		private static const BUILDVER:String = "021.199";
+		private static const BUILDVER:String = "021.200";
 		
 		public static const DEBUG:Boolean = 1 == 1;
 		

@@ -497,7 +497,7 @@ package components.system
 								addCmd(NAVI.PARAMS_EGTS, CMD.EGTS_CRYPTO_GOST_S_BOX);
 								addCmd(NAVI.PARAMS_EGTS, CMD.EGTS_LOGIN_ENABLE);
 								
-								if( r < 58 )addCmd(NAVI.PARAMS_EGTS, CMD.VR_EGTS_PRIORITY);
+								if( r < 58 && DS.isDevice( DS.V2 ))addCmd(NAVI.PARAMS_EGTS, CMD.VR_EGTS_PRIORITY);
 								
 								MENU_GROUP |= 64;
 							}
