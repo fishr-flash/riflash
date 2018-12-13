@@ -64,21 +64,21 @@ package components.gui.visual.charsGraphic.components
 			
 			
 			if ( _currentStep > _ownerRect.width * .85 )
-								updateChine();
+				updateChine();
 			_currentStep += _drawStep;
 			
 			if ( _bars.length )
 			{
-					_fineLine.x = _currentStep;
-					_fineLine.y = vPixSize;
-					if ( _fineLine.width !=  _ownerRect.width - _currentStep + 5 )
-					{
-						_fineLine.graphics.clear();
-						_fineLine.graphics.lineStyle( 1, _color , .35 );
-						_fineLine.graphics.lineTo( _ownerRect.width - _currentStep + 85, 0 );
-					}
-					
-					this.addChild( _fineLine );
+				_fineLine.x = _currentStep;
+				_fineLine.y = vPixSize;
+				if ( _fineLine.width !=  _ownerRect.width - _currentStep + 5 )
+				{
+					_fineLine.graphics.clear();
+					_fineLine.graphics.lineStyle( 1, _color , .35 );
+					_fineLine.graphics.lineTo( _ownerRect.width - _currentStep + 85, 0 );
+				}
+				
+				this.addChild( _fineLine );
 			}
 			
 			_tf.text = lbl;
@@ -88,6 +88,27 @@ package components.gui.visual.charsGraphic.components
 			
 			
 		}
+		
+		public function destruct():void 
+		{
+			var shape:Shape;
+			while ( _bars.length )
+			{
+				shape = _bars.shift();
+				shape.graphics.clear();
+				shape.parent.removeChild( shape );
+				shape = null;
+			}
+			
+			_tf.parent.removeChild( _tf );
+			_tf = null;
+			
+			_fineLine.graphics.clear();
+			_fineLine.parent.removeChild( _fineLine );
+			_fineLine = null;
+			
+		}
+		
 		
 		private function updateChine():void 
 		{
@@ -126,5 +147,5 @@ package components.gui.visual.charsGraphic.components
 			return tfInfo;
 		}
 	}
-
+	
 }

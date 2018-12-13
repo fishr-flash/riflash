@@ -18,7 +18,7 @@ package components.gui.visual.charsGraphic
 		private var hLines:Vector.<HLine> = new Vector.<HLine>();
 		private var _mainSizes:Rectangle;
 		private var _adapt:DiapasonAdapterHor;
-
+		
 		/**
 		 * т.к. горизонтальная ось не является шкалой времени, а шагов-изменений
 		 * нет смысла рисовать одинаковые данные, рисуем только изменения
@@ -28,7 +28,7 @@ package components.gui.visual.charsGraphic
 		{
 			return _lastBarY;
 		}
-
+		
 		private var _callback:Function;
 		private var _hBLines:Vector.<HBarLine>;
 		private var _lastBarY:Number = 0;
@@ -94,9 +94,9 @@ package components.gui.visual.charsGraphic
 						hLines[ i ].startSilent();
 					else
 						hLines[ i ].stopSilent();
-							
+					
 				}
-										
+				
 			}
 		}
 		
@@ -115,9 +115,41 @@ package components.gui.visual.charsGraphic
 			
 		}
 		
+		public function removeHBarLine( name:String ):void 
+		{
+			if( !_hBLines ) 
+					return;
+			var line:HBarLine;
+			
+			const len:int = _hBLines.length;
+			for ( var i:int = 0; i < len; i++ )
+			{
+				
+				if ( _hBLines[ i ].name == name )
+				{
+					line = _hBLines.splice( i, 1 )[ 0 ];
+					break;
+				}
+			}
+			
+			
+			
+			if ( line  )
+			{
+				
+				line.destruct();
+				line.parent.removeChild( line );
+				line = null;
+				if( _hBLines.length == 0 ) _hBLines = null;
+			}
+			
+			
+		}
+		
 		public function setBar( name:String, rel:Number, lbl:String = ""):void 
 		{
 			
+			if( !_hBLines ) return;
 			
 			_lastBarY = rel;
 			
@@ -142,8 +174,8 @@ package components.gui.visual.charsGraphic
 				if ( py < 0 ) py = 0;
 				line.setYPos( py , lbl );
 				
-																					
-					
+				
+				
 				
 				
 			}

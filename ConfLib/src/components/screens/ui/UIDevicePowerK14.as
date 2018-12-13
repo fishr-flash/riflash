@@ -97,15 +97,28 @@ package components.screens.ui
 			switch( p.cmd ) 
 			{
 				case CMD.BATTERY_LEVEL:
-					rel = Number( p.data[ 0 ][ 1 ] ) / 1000;
-					getField( p.cmd, 2 ).setCellInfo( rel.toFixed( 2 ) );
+					if( p.getParam( 1 ) > 0 )
+					{
+						getField( p.cmd, 2 ).disabled = false;
+						rel = Number( p.data[ 0 ][ 1 ] ) / 1000;
+						getField( p.cmd, 2 ).setCellInfo( rel.toFixed( 2 ) );
+						
+						
+						if( _chart && _chart.lastBarY != rel )_chart.setBar( "BL2", rel, rel.toFixed( 2 ) + loc( "measure_volt_1l" ) );
+						
+					}
+					else
+					{
+						if( _chart ) _chart.removeHBarLine( "BL2" );
+						getField( p.cmd, 2 ).setCellInfo( loc( "can_not_available" ) );
+						getField( p.cmd, 2 ).disabled = true;
+					}
 					
-					
-					if( _chart && _chart.lastBarY != rel )_chart.setBar( "BL2", rel, rel.toFixed( 2 ) + loc( "measure_volt_1l" ) );
 					if (!task)
 						task = TaskManager.callLater( onRequestVoltage, TaskManager.DELAY_5SEC );
 					else
 						task.repeat();
+					
 					break;
 				
 				
@@ -200,8 +213,8 @@ package components.screens.ui
 				/*const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) + .02;
 				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) - .02;*/
 				/// отрицательные значения добавляют высоту графика, положительные сужают
-				const clearanceMax:Number = -.1;
-				const clearanceMin:Number = -.1;
+				const clearanceMax:Number = -.01;
+				const clearanceMin:Number = -.01;
 				const maxV:Number = ( Number( p.data[ 0 ][ 0 ] ) / Lp.MULT ) - clearanceMax;
 				const minV:Number = ( Number( p.data[ 0 ][ 1 ] ) / Lp.MULT ) + clearanceMin;
 				
@@ -209,10 +222,7 @@ package components.screens.ui
 				// entry point
 				var legend:Array = [];
 				
-				//const len:int = ( maxV - minV ) / .05;
-				const len:int = 10;
-				
-				
+				const len:int = 12;
 				var vl:String;
 				for( var i:int = 0; i < len; i++ )
 				{
@@ -227,12 +237,12 @@ package components.screens.ui
 				
 				
 				_chart = new ChartOfIndications;
-				_chart.x = globalX + 20; 
-				_chart.y = globalY + 30;
+				_chart.x = globalX + 30; 
+				_chart.y = globalY + 10;
 				this.addChild( _chart );
 				
 				
-				_chart.initField( minV, maxV, legend, new Rectangle( 0, 0, 700, 400 ), updateLimits );
+				_chart.initField( minV, maxV, legend, new Rectangle( 0, 0, 710, 400 ), updateLimits );
 				const lineV1:Number = Number( p.data[ 0 ][ 0 ] ) / Lp.MULT;
 				const lineV2:Number = Number( p.data[ 0 ][ 1 ] ) / Lp.MULT;
 				const lineV3:Number = Number( p.data[ 0 ][ 2 ] ) / Lp.MULT;
@@ -242,7 +252,7 @@ package components.screens.ui
 				Lp.MX_PWR = lineV1;
 				Lp.MN_DSCH = Lp.MN_PWR =  lineV2;
 				Lp.MX_DSCH = lineV5 - Lp.GAP;
-				Lp.MN_RECOV = lineV3 + Lp.GAP;
+				Lp.MN_RCVR = lineV3 + Lp.GAP;
 				
 				_chart.createHLine("1"
 					, lineV1 
@@ -286,7 +296,7 @@ package components.screens.ui
 					, HLine.VALIGN_TOP
 				);
 				
-				_chart.createHBarLine( "BL2", COLOR.RED_DARK, 3 );
+				
 			}
 			else
 			{
@@ -299,7 +309,7 @@ package components.screens.ui
 				Lp.MX_PWR = lineV11;
 				Lp.MN_DSCH = Lp.MN_PWR =  lineV12;
 				Lp.MX_DSCH = lineV15;
-				Lp.MN_RECOV = lineV13 + Lp.GAP;
+				Lp.MN_RCVR = lineV13 + Lp.GAP;
 				
 				_chart.setLinePos( "1"
 									, lineV11
@@ -337,11 +347,17 @@ package components.screens.ui
 			var legend:String = "";
 			/// надо ли передвигать ползунок, или достаточно сменить текст надписи
 			var setp:Boolean = false;
-			
+			/// если порог определяется несколькими данными
+			/// сюда записывается актуальный по результатам сравнения
+			var actual:Number = 0;
 			switch( name ) {
 				case "3":
 					
 						Lp.MX_DSCH = Number( getField( CMD.VOLTAGE_LIMITS, 5 ).getCellInfo() ) - Lp.GAP;
+						actual = Number( getField( CMD.VOLTAGE_LIMITS, 4 ).getCellInfo() ) - Lp.GAP;
+						
+						if( actual < Lp.MX_DSCH )
+							Lp.MX_DSCH = actual;
 						
 						legend = loc("voltage_for_fail_acu");
 						if( rel >= Lp.MX_DSCH )
@@ -363,21 +379,40 @@ package components.screens.ui
 				
 				case "4":
 					legend = loc("power_on_when_voltage_reach");
+					
+					Lp.MN_OND  = Number( getField( CMD.VOLTAGE_LIMITS, 3 ).getCellInfo() ) + Lp.GAP;
+					
+					actual = Number( getField( CMD.VOLTAGE_LIMITS, 2 ).getCellInfo() ) + Lp.GAP;
+					
+					if( actual > Lp.MN_OND )
+							Lp.MN_OND = actual;
+					
+					if( rel <= Lp.MN_OND )
+					{
+						res = Lp.MN_OND;
+						setp = true;
+					}
+					
+					if( rel >= Lp.MX_OND )
+					{
+						res = Lp.MX_OND;
+						setp = true;
+					}
 						
 					break;
 				
 				case "5":
-					Lp.MN_RECOV = Number( getField( CMD.VOLTAGE_LIMITS, 3 ).getCellInfo() ) + Lp.GAP;
+					Lp.MN_RCVR = Number( getField( CMD.VOLTAGE_LIMITS, 3 ).getCellInfo() ) + Lp.GAP;
 					
-					if( rel >= Lp.MX_PWR )
+					if( rel >= Lp.MX_RCVR )
 					{
-						res = Lp.MX_PWR - Lp.GAP;
+						res = Lp.MX_RCVR;
 						setp = true;
 					}
 					
-					if ( rel <= Lp.MN_RECOV )
+					if ( rel <= Lp.MN_RCVR )
 					{
-						res = Lp.MN_RECOV + Lp.GAP;
+						res = Lp.MN_RCVR + Lp.GAP;
 						setp = true;
 					}
 					
@@ -432,7 +467,17 @@ class Lp
 	 * Нижний предел напряжение питания ( парам 2 ком 906 )
 	 */
 	public static var MN_PWR:Number = 2.1;
-	public static var MAX_RECOVERY:Number = 4.4;
+	
+	/**
+	 *  Максимальное значение уровня восстановления разряда
+	 */
+	public static var MX_RCVR:Number = 4.1;
+	
+	/**
+	 * мин уровень установки уровня восстановления разряда АКБ
+	 * устанавливается в зависимости от уровня разряда
+	 */
+	public static var MN_RCVR:Number = 2;
 	
 	/**
 	 * мин уровень установки уровня разряда АКБ
@@ -443,11 +488,17 @@ class Lp
 	 * устанавливается в зависимости от уровня Восст. разряда
 	 */
 	public static var MX_DSCH:Number = 2;
+	
 	/**
-	 * мин уровень установки уровня восстановления разряда АКБ
-	 * устанавливается в зависимости от уровня разряда
+	 *  Макс. уровень включения прибора
 	 */
-	public static var MN_RECOV:Number = 2;
+	public static var MX_OND:Number = 4;
+	
+	/**
+	 *  Мин. уровень включения прибора
+	 */
+	public static var MN_OND:Number = 0;
+	
 	/**
 	 * минимально допустимое расстояние между значениями восстановления и разряда АКБ
 	 */
@@ -460,6 +511,9 @@ class Lp
 	 * подставляемый знак между текстом и значением (-/=/~ )
 	 */
 	public static var SIMB:String = " ~";
+
+	
+	
 	
  
 	

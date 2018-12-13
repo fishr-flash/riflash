@@ -21,7 +21,7 @@ package components.gui.visual.charsGraphic.components
 		public static const VALIGN_TOP:String = "valignTop";
 		public static const VALIGN_BOTTOM:String = "valignBottom";
 		public static const DURATION_TWEEN:Number = .7;
-		public static const ALPHA_TWEEN:Number = .35;
+		public static const ALPHA_TWEEN:Number = .30;
 		
 		private var _mainW:int;
 		private var _stepDotted:int = 10;

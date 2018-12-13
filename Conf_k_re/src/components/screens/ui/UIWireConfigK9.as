@@ -175,6 +175,30 @@ package components.screens.ui
 					break;
 				case CMD.K5_ADC_TRESH:
 					
+					////////////////////TRACE//////////////////////////////
+					///TODO: trace
+					if( true )
+					{
+						import components.abstract.functions.dtrace;
+						import su.fishr.utils.Dumper;
+						import flash.utils.getTimer;
+						const log_I:String = String
+							(
+								"" +   getTimer()  + "  \t " +
+								"I project:  ConfLib"
+								+ "file:  UIWireConfigK9.as"
+								+ ". funcname : " + ""
+								+ "\r  dump( p.data ): " + Dumper.dump( p.data )
+								//+ "\r  dump(  ): " + Dumper.dump( true )
+								+ "\r  : " + true
+							);
+						
+						dtrace( log_I );
+						
+						p.data[ 0 ] = [ 30, 245, 438, 502, 774 ];
+					}
+					////////////////////////////////////////////////////////
+					
 					wa.add(sens);
 					var a:Array = OPERATOR.dataModel.getData(CMD.K9_PART_PARAMS);
 					
@@ -345,6 +369,7 @@ package components.screens.ui
 			for (i=0; i<len; i++) {
 				//RequestAssembler.getInstance().fireEvent( new Request(CMD.K5_ADC_TRESH,put,i+1,[30,243,385,501,776]));
 				RequestAssembler.getInstance().fireEvent( new Request(CMD.K5_ADC_TRESH,put,i+1,[30,245,386,502,774]));
+				//RequestAssembler.getInstance().fireEvent( new Request(CMD.K5_ADC_TRESH,put,i+1,[ 30, 245, 438, 502, 774 ]));
 			}
 			//+K5_ADC_TRESH=1, 30, 243, 385, 501, 776
 			
@@ -477,7 +502,7 @@ class Sensor extends UIComponent
 			var b:Boolean = UTIL.isBit(num,bit);*/
 			
 			var a:Array = OPERATOR.dataModel.getData(CMD.K9_AWIRE_TYPE);
-			var b:Boolean = a[num][0] == 1;
+			var b:Boolean = a[num][0] == 1; 
 			
 			
 			if (b) {	// если замкнутое
