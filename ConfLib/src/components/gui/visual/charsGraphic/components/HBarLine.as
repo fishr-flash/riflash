@@ -14,7 +14,7 @@ package components.gui.visual.charsGraphic.components
 	 * ...
 	 * @author  
 	 */
-	public class HBarLine extends Sprite 
+	public class HBarLine extends BaseLine 
 	{
 		private var _currentStep:int;
 		private var _drawStep:int;
@@ -100,12 +100,19 @@ package components.gui.visual.charsGraphic.components
 				shape = null;
 			}
 			
-			_tf.parent.removeChild( _tf );
-			_tf = null;
+			if( _tf )
+			{
+				_tf.parent.removeChild( _tf );
+				_tf = null;
+			}
 			
-			_fineLine.graphics.clear();
-			_fineLine.parent.removeChild( _fineLine );
-			_fineLine = null;
+			if( _fineLine )
+			{
+				_fineLine.graphics.clear();
+				_fineLine.parent.removeChild( _fineLine );
+				_fineLine = null;
+			}
+			
 			
 		}
 		

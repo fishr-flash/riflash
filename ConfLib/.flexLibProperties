@@ -33,7 +33,7 @@
     <classEntry path="components.abstract.BMPDecoder"/>
     <classEntry path="components.abstract.servants.EgtsVehiclesServant"/>
     <classEntry path="components.abstract.HoldConnectBot"/>
-    <classEntry path="components.screens.ui.UIDevicePowerK14"/>
+    <classEntry path="components.gui.visual.charsGraphic.components.BaseLine"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

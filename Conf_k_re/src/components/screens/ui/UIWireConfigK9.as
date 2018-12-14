@@ -175,29 +175,7 @@ package components.screens.ui
 					break;
 				case CMD.K5_ADC_TRESH:
 					
-					////////////////////TRACE//////////////////////////////
-					///TODO: trace
-					if( true )
-					{
-						import components.abstract.functions.dtrace;
-						import su.fishr.utils.Dumper;
-						import flash.utils.getTimer;
-						const log_I:String = String
-							(
-								"" +   getTimer()  + "  \t " +
-								"I project:  ConfLib"
-								+ "file:  UIWireConfigK9.as"
-								+ ". funcname : " + ""
-								+ "\r  dump( p.data ): " + Dumper.dump( p.data )
-								//+ "\r  dump(  ): " + Dumper.dump( true )
-								+ "\r  : " + true
-							);
-						
-						dtrace( log_I );
-						
-						p.data[ 0 ] = [ 30, 245, 438, 502, 774 ];
-					}
-					////////////////////////////////////////////////////////
+					
 					
 					wa.add(sens);
 					var a:Array = OPERATOR.dataModel.getData(CMD.K9_PART_PARAMS);

@@ -4,6 +4,7 @@ package components.gui.visual.charsGraphic
 	import flash.geom.Rectangle;
 	
 	import components.gui.visual.charsGraphic.DiapasonAdapterHor;
+	import components.gui.visual.charsGraphic.components.BaseLine;
 	import components.gui.visual.charsGraphic.components.CellularField;
 	import components.gui.visual.charsGraphic.components.HBarLine;
 	import components.gui.visual.charsGraphic.components.HLine;
@@ -15,7 +16,7 @@ package components.gui.visual.charsGraphic
 	public class ChartOfIndications extends Sprite 
 	{
 		
-		private var hLines:Vector.<HLine> = new Vector.<HLine>();
+		private var _hLines:Vector.<HLine> = new Vector.<HLine>();
 		private var _mainSizes:Rectangle;
 		private var _adapt:DiapasonAdapterHor;
 		
@@ -30,8 +31,9 @@ package components.gui.visual.charsGraphic
 		}
 		
 		private var _callback:Function;
-		private var _hBLines:Vector.<HBarLine>;
+		private var _hBLines:Vector.<HBarLine> = new Vector.<HBarLine>;
 		private var _lastBarY:Number = 0;
+		private var _callDragRect:Function;
 		public function ChartOfIndications() 
 		{
 			super();
@@ -42,14 +44,16 @@ package components.gui.visual.charsGraphic
 								   , relMax:Number
 									 , legend:Array
 									   , rect:Rectangle = null
-										 , callback:Function = null):void
+										 , callDragRect:Function = null
+										   , callback:Function = null):void
 		{
 			if ( !rect ) rect = new Rectangle( 0, 0, 600, 400 );
+			
 			
 			_mainSizes = rect;
 			_callback = callback;
 			_adapt = new DiapasonAdapterHor( relMin, relMax, _mainSizes );
-			
+			_callDragRect = callDragRect;
 			this.addChild( new CellularField( rect, legend, _adapt ) );
 			
 			
@@ -62,12 +66,16 @@ package components.gui.visual.charsGraphic
 										   , lbl:String = ""
 											 , legend:String = ""
 											   , valign:String = "valignTop"
+												 
 		):void
 		{
+			if( getLineOfName( name ) )
+									return;
+			
 			var line:HLine = new HLine( _mainSizes.width, color, dragable, valign );
 			line.y = _adapt.getVPixSize( vpos );
 			line.name = name;
-			hLines.push( line );
+			_hLines.push( line );
 			this.addChild( line );
 			line.setCustomInfo( lbl, legend );
 			if ( dragable )
@@ -82,26 +90,12 @@ package components.gui.visual.charsGraphic
 			changeValign( line );
 		}
 		
-		protected function changeLine(event:ChartEvent):void
-		{
-			
-			
-			var len:int = hLines.length;
-			for (var i:int=0; i<len; i++) {
-				if( hLines[ i ].name != event.data.name )
-				{
-					if( event.type == ChartEvent.LINE_ONM )
-						hLines[ i ].startSilent();
-					else
-						hLines[ i ].stopSilent();
-					
-				}
-				
-			}
-		}
-		
 		public function createHBarLine( name:String, color:uint, drawStep:int = 1 ):void 
 		{
+			// если линия с таким именем уже есть ничео 
+			// создано не будет
+			if( getBLineOfName( name ) )
+										return;
 			if ( !_hBLines ) _hBLines = new Vector.<HBarLine>
 			const bLine:HBarLine = new HBarLine(name
 				,_mainSizes
@@ -117,8 +111,8 @@ package components.gui.visual.charsGraphic
 		
 		public function removeHBarLine( name:String ):void 
 		{
-			if( !_hBLines ) 
-					return;
+			if( !_hBLines || !_hBLines.length ) 
+											return;
 			var line:HBarLine;
 			
 			const len:int = _hBLines.length;
@@ -140,7 +134,6 @@ package components.gui.visual.charsGraphic
 				line.destruct();
 				line.parent.removeChild( line );
 				line = null;
-				if( _hBLines.length == 0 ) _hBLines = null;
 			}
 			
 			
@@ -149,7 +142,6 @@ package components.gui.visual.charsGraphic
 		public function setBar( name:String, rel:Number, lbl:String = ""):void 
 		{
 			
-			if( !_hBLines ) return;
 			
 			_lastBarY = rel;
 			
@@ -188,20 +180,7 @@ package components.gui.visual.charsGraphic
 		 */
 		public function setLinePos(name:String, yp:Number, lbl:String, legend:String = "" ):void
 		{
-			var line:HLine = null;
-			const len:int = hLines.length;
-			for ( var i:int = 0; i < len; i++ )
-			{
-				
-				if ( hLines[ i ].name == name )
-				{
-					line = hLines[ i ];
-					break;
-				}
-			}
-			
-			
-			
+			var line:HLine = getLineOfName( name );
 			if ( line )
 			{
 				
@@ -214,17 +193,7 @@ package components.gui.visual.charsGraphic
 		
 		public function setLineInfo(name:String, lbl:String, legend:String):void 
 		{
-			var line:HLine = null;
-			const len:int = hLines.length;
-			for ( var i:int = 0; i < len; i++ )
-			{
-				
-				if ( hLines[ i ].name == name )
-				{
-					line = hLines[ i ];
-					break;
-				}
-			}
+			var line:HLine = getLineOfName( name );
 			
 			
 			
@@ -237,6 +206,61 @@ package components.gui.visual.charsGraphic
 			
 			changeValign( line );
 		}
+		
+		public function getRealYOfLine( name:String ):Number
+		{
+			const line:HLine = getLineOfName( name );
+			
+			if ( line ) return line.y;
+			else return NaN;
+			
+		}
+		
+		public function getRealSize( rel:Number ):Number
+		{
+			return _adapt.getHPixSize( rel );
+		}
+		public function getRealPosition( rel:Number ):Number
+		{
+			return _adapt.getVPixSize( rel );
+		}
+		
+		public function setDragForLine( name:String, dragRect:Rectangle ):void
+		{
+			const line:HLine = getLineOfName( name );
+			
+			
+			if ( line )
+				line.dragRect = dragRect;
+		}
+		
+		
+		protected function changeLine(event:ChartEvent):void
+		{
+			
+			
+			var len:int = _hLines.length;
+			for (var i:int = 0; i < len; i++) {
+				
+				if( _hLines[ i ].name != event.data.name )
+				{
+					if( event.type == ChartEvent.LINE_ONM )
+						_hLines[ i ].startSilent();
+					else
+						_hLines[ i ].stopSilent();
+					
+				}
+				else if( event.type == ChartEvent.LINE_ONM && _callDragRect != null )
+				{
+					
+					_hLines[ i ].dragRect = _callDragRect( _hLines[ i ].name, _hLines[ i ].dragRect );
+				}
+				
+				
+			}
+		}
+		
+		
 		
 		
 		
@@ -270,13 +294,47 @@ package components.gui.visual.charsGraphic
 			else hLine.replaceValign( "" );
 		}
 		
+		private function getLineOfName( name:String ):HLine
+		{
+			if( !_hLines ) return null;
+			
+			var line:HLine = null;
+			const len:int = _hLines.length;
+			for ( var i:int = 0; i < len; i++ )
+			{
+				
+				if ( _hLines[ i ].name == name )
+				{
+					line = _hLines[ i ];
+					break;
+				}
+			}
+			
+			return line;
+			
+			
+		}
 		
-		
-		
-		
-		
-		
-		
+		private function getBLineOfName( name:String ):HBarLine
+		{
+			if( !_hBLines ) return null;
+			
+			var line:HBarLine = null;
+			const len:int = _hBLines.length;
+			for ( var i:int = 0; i < len; i++ )
+			{
+				
+				if ( _hBLines[ i ].name == name )
+				{
+					line = _hBLines[ i ];
+					break;
+				}
+			}
+			
+			return line;
+			
+			
+		}
 		
 	}
 	

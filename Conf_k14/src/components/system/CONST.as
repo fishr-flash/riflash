@@ -16,9 +16,9 @@ package components.system
 /** GLOBAL CONST	*/
 		public static var CLIENT_BUILD_VERSION:String = "";
 		public static var VERSION:String = "";
-		private static const BUILDVER:String = "021.201";
+		private static const BUILDVER:String = "021.202";
 		
-		public static const DEBUG:Boolean = 1 == 1;
+		public static const DEBUG:Boolean = 1 == 0;
 		
 		public static const PRESET:Array = [
 			{	// 1 - Контакт 14 U

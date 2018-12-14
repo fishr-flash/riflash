@@ -1,4 +1,4 @@
-package components.gui.visual.charsGraphic.components 
+﻿package components.gui.visual.charsGraphic.components 
 {
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -16,7 +16,7 @@ package components.gui.visual.charsGraphic.components
 	
 	import components.gui.visual.charsGraphic.ChartEvent;
 	
-	public class HLine extends Sprite{
+	public class HLine extends BaseLine{
 		
 		public static const VALIGN_TOP:String = "valignTop";
 		public static const VALIGN_BOTTOM:String = "valignBottom";
@@ -44,9 +44,16 @@ package components.gui.visual.charsGraphic.components
 			return _dragable;
 		}
 		
+		public function get dragRect():Rectangle
+		{
+			return _dragRect;
+		}
 		public function set dragRect(value:Rectangle):void 
 		{
+			
 			_dragRect = value;
+			
+			
 		}
 		
 		public function HLine( mainw:int, color:uint, dragable:Boolean = false, valign:String = "valignTop" )
@@ -59,6 +66,10 @@ package components.gui.visual.charsGraphic.components
 			
 		}
 		
+		public function getRealY():Number
+		{
+			return this.y;
+		}
 		
 		public function setYPos( ypos:Number ):void
 		{
@@ -75,6 +86,29 @@ package components.gui.visual.charsGraphic.components
 			else if ( valign == VALIGN_BOTTOM ) _legend.y = 0;
 			else _legend.y = -25;
 		}
+		
+		public function startSilent():void
+		{
+			eaze( this ).to( DURATION_TWEEN, { alpha:ALPHA_TWEEN} );
+		}
+		
+		public function stopSilent():void
+		{
+			eaze( this ).to( DURATION_TWEEN, { alpha:1} );
+		}
+		
+		public function setCustomInfo( rel:String, legend:String = "" ):void
+		{
+			_customInfo.text = rel;
+			if ( legend.length ) 
+			{
+				_legend.text = legend;
+				_legend.x = ( _mainW -  _legend.width ) / 2;
+			}
+			
+		}
+		
+		
 		
 		private function initLine( color:uint ):HLine
 		{
@@ -128,38 +162,20 @@ package components.gui.visual.charsGraphic.components
 			return this;
 		}
 		
-		public function startSilent():void
-		{
-			eaze( this ).to( DURATION_TWEEN, { alpha:ALPHA_TWEEN} );
-		}
 		
-		public function stopSilent():void
-		{
-			eaze( this ).to( DURATION_TWEEN, { alpha:1} );
-		}
-		
-		public function setCustomInfo( rel:String, legend:String = "" ):void
-		{
-			_customInfo.text = rel;
-			if ( legend.length ) 
-			{
-				_legend.text = legend;
-				_legend.x = ( _mainW -  _legend.width ) / 2;
-			}
-			
-		}
 		
 		private function onmDown(e:MouseEvent):void 
 		{
+			this.dispatchEvent( new ChartEvent( ChartEvent.LINE_ONM, false, false, { name: this.name } ) );
 			_pointer.removeEventListener(MouseEvent.MOUSE_DOWN, onmDown );
 			_pointer.removeEventListener(MouseEvent.MOUSE_OUT, onMouseOut );
 			this.parent.addChild( this );
-			this.startDrag( false, _dragRect );
 			this.stage.addEventListener(MouseEvent.MOUSE_UP, onmUp );
 			this.stage.addEventListener(Event.MOUSE_LEAVE, onmUp );
 			this.stage.addEventListener(MouseEvent.MOUSE_MOVE, onMove );
 			this.alpha = 1;
-			this.dispatchEvent( new ChartEvent( ChartEvent.LINE_ONM, false, false, { name: this.name } ) );
+			this.startDrag( false, _dragRect );
+			
 		}
 		
 		private function onMove(e:Event):void 
@@ -181,6 +197,7 @@ package components.gui.visual.charsGraphic.components
 			onMouseOut( null );
 			this.stopDrag();
 			_pointer.addEventListener(MouseEvent.MOUSE_DOWN, onmDown );
+			
 			if( _oldY == _dragRect.height || _oldY == 0 )
 				this.dispatchEvent( new ChartEvent( ChartEvent.DRAG_LINE, false, false, { name: this.name, ypos: this.y } ) );
 			this.dispatchEvent( new ChartEvent( ChartEvent.LINE_UPM, false, false, { name: this.name } ) );
